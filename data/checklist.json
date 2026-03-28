@@ -1,0 +1,429 @@
+[
+  {
+    "id": "personal-docs",
+    "title": "Personal Documents",
+    "icon": "📄",
+    "items": [
+      {
+        "id": "pd-1",
+        "label": "Valid passport (6+ months validity)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-2",
+        "label": "Birth certificate (with certified translation if not in English)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-3",
+        "label": "Marriage certificate (if applicable)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-4",
+        "label": "Degree certificates and diplomas",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-5",
+        "label": "Academic transcripts",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-6",
+        "label": "Detailed resume / CV",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-7",
+        "label": "Current immigration status documentation (I-94, visa stamp, approval notices)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pd-8",
+        "label": "Passport-style photos (2x2)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  },
+  {
+    "id": "professional-evidence",
+    "title": "Professional Evidence",
+    "icon": "🏆",
+    "items": [
+      {
+        "id": "pe-1",
+        "label": "Updated Google Scholar profile",
+        "checked": false,
+        "notes": "https://scholar.google.com/citations?user=TUGVys0AAAAJ&hl=en",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-2",
+        "label": "Claim ICMLA paper on OpenReview via Semantic Scholar",
+        "checked": false,
+        "notes": "https://openreview.net/profile?id=~Gaurav_Chodwadia1",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-3",
+        "label": "Citation report (Google Scholar, Scopus, or Web of Science)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-4",
+        "label": "Full publication list with citation counts",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-5",
+        "label": "Conference reviewer confirmations (CVPR, ICLR, etc.)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-6",
+        "label": "Patent filings or grants documentation",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-7",
+        "label": "Media coverage / press clippings",
+        "checked": false,
+        "notes": "Pending — HARO/Qwoted sign-up needed",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-8",
+        "label": "Walmart compensation documentation (W-2, offer letter)",
+        "checked": false,
+        "notes": "For High Salary criterion",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pe-9",
+        "label": "Marty project documentation for Original Contributions claim",
+        "checked": false,
+        "notes": "LangGraph, LangChain, FastAPI stack — industry-first agentic AI",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  },
+  {
+    "id": "reviewer-outreach",
+    "title": "Reviewer Applications — Send Drafts",
+    "icon": "📧",
+    "items": [
+      {
+        "id": "ro-1",
+        "label": "Send PAAMS 2026 application (pc@paams.net)",
+        "checked": false,
+        "notes": "Draft ready Mar 27. SEND ASAP — paper deadline Apr 17",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-2",
+        "label": "Send ICML SRAS Workshop application (sras2026workshop@gmail.com)",
+        "checked": false,
+        "notes": "Draft ready. Verify contact on sras2026.space",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-3",
+        "label": "Send Applied Intelligence / Springer application (apin@springer.com)",
+        "checked": false,
+        "notes": "Draft ready. Rolling — always open",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-4",
+        "label": "Draft + send IJCAI-ECAI 2026 application",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-5",
+        "label": "Draft + send JAIR application",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-6",
+        "label": "Draft + send IEEE TNNLS application (April)",
+        "checked": false,
+        "notes": "Matches existing IEEE pub",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-7",
+        "label": "Draft + send ACM TIST application",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-8",
+        "label": "Draft + send AIJ (Elsevier) application",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "ro-9",
+        "label": "Draft + send KDD 2026 Workshop application",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  },
+  {
+    "id": "follow-ups",
+    "title": "Pending Follow-ups",
+    "icon": "🔔",
+    "items": [
+      {
+        "id": "fu-1",
+        "label": "Apr 2 — Follow up with Josh (ACM CAIS) re: AEC title + confirmation letter",
+        "checked": false,
+        "notes": "josh@cmpnd.ai",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "fu-2",
+        "label": "Apr 3 — Follow up with UAI 2026 if no reply",
+        "checked": false,
+        "notes": "uai2026chairs+program@gmail.com",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "fu-3",
+        "label": "Apr 5 — Check replies from ACL ARR + COLM 2026",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "fu-4",
+        "label": "Apr 10 — Check reply from TMLR",
+        "checked": false,
+        "notes": "tmlr-editors@jmlr.org",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "fu-5",
+        "label": "Apr 15 — Check OpenReview for ICML 2026 workshop reviewer openings",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "fu-6",
+        "label": "May 1 — Check blog.neurips.cc for NeurIPS 2026 self-nomination form",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  },
+  {
+    "id": "attorney-legal",
+    "title": "Attorney & Legal (I-140)",
+    "icon": "⚖️",
+    "items": [
+      {
+        "id": "al-1",
+        "label": "Research 2-3 EB-1A immigration attorneys",
+        "checked": false,
+        "notes": "Attorney guidance: 3 criteria min; stronger case with 4-5 well-documented ones",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-2",
+        "label": "Schedule initial consultations",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-3",
+        "label": "Review and compare fee structures",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-4",
+        "label": "Sign attorney engagement letter",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-5",
+        "label": "Complete Form I-140",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-6",
+        "label": "Prepare I-140 filing fee ($700)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-7",
+        "label": "Premium processing fee ($2,805) — if opting in",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-8",
+        "label": "Form G-28 (Notice of Entry of Appearance as Attorney)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-9",
+        "label": "Prepare petition cover letter",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "al-10",
+        "label": "Compile exhibit index",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  },
+  {
+    "id": "letters-endorsements",
+    "title": "Letters & Endorsements",
+    "icon": "✉️",
+    "items": [
+      {
+        "id": "le-1",
+        "label": "Identify 6-8 potential recommenders",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-2",
+        "label": "Categorize as independent vs. dependent",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-3",
+        "label": "Draft template letters for each recommender",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-4",
+        "label": "Send requests with clear deadlines",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-5",
+        "label": "Follow up at 1-week and 2-week marks",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-6",
+        "label": "Collect final signed letters on organizational letterhead",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-7",
+        "label": "Verify each letter addresses specific EB-1A criteria",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "le-8",
+        "label": "Ensure mix of independent and dependent experts",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  },
+  {
+    "id": "post-approval",
+    "title": "Post-Approval / I-485 (Future Phase)",
+    "icon": "🎯",
+    "items": [
+      {
+        "id": "pa-1",
+        "label": "File I-485 (Adjustment of Status)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pa-2",
+        "label": "Schedule medical exam (I-693)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pa-3",
+        "label": "File I-765/I-131 combo card (EAD/AP)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      },
+      {
+        "id": "pa-4",
+        "label": "Prepare civil documents for consular processing (if applicable)",
+        "checked": false,
+        "notes": "",
+        "updatedAt": "2026-03-27T23:48:13.529Z"
+      }
+    ]
+  }
+]

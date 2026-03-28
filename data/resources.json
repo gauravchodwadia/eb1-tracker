@@ -1,0 +1,204 @@
+[
+  {
+    "id": "my-profiles",
+    "title": "My Profiles",
+    "links": [
+      {
+        "id": "r-me-1",
+        "label": "OpenReview Profile",
+        "url": "https://openreview.net/profile?id=~Gaurav_Chodwadia1",
+        "isCustom": false,
+        "notes": "ICMLA paper needs to be claimed here"
+      },
+      {
+        "id": "r-me-2",
+        "label": "Google Scholar",
+        "url": "https://scholar.google.com/citations?user=TUGVys0AAAAJ&hl=en",
+        "isCustom": false,
+        "notes": ""
+      },
+      {
+        "id": "r-me-3",
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/gauravchodwadia",
+        "isCustom": false,
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "id": "google-drive",
+    "title": "Google Drive Tracker",
+    "links": [
+      {
+        "id": "r-gd-1",
+        "label": "EB-1A Reviewer Tracker Spreadsheet",
+        "url": "https://docs.google.com/spreadsheets/d/1oh4QsFH9ufUgILLUbEdxBpXW7TwyvWl-GXBE4DjSp7g",
+        "isCustom": false,
+        "notes": "Sheets: Conference Reviewer Tracker, Action Queue, EB-1A Evidence Log"
+      }
+    ]
+  },
+  {
+    "id": "uscis-official",
+    "title": "Official USCIS Resources",
+    "links": [
+      {
+        "id": "r-1",
+        "label": "USCIS Policy Manual Vol. 6, Part F, Ch. 2",
+        "url": "https://www.uscis.gov/policy-manual/volume-6-part-f-chapter-2",
+        "isCustom": false,
+        "notes": "EB-1A eligibility criteria"
+      },
+      {
+        "id": "r-2",
+        "label": "Form I-140 Page",
+        "url": "https://www.uscis.gov/i-140",
+        "isCustom": false,
+        "notes": ""
+      },
+      {
+        "id": "r-3",
+        "label": "Premium Processing Info",
+        "url": "https://www.uscis.gov/forms/how-do-i-request-premium-processing",
+        "isCustom": false,
+        "notes": ""
+      },
+      {
+        "id": "r-4",
+        "label": "USCIS Case Status Tracker",
+        "url": "https://egov.uscis.gov/casestatus/landing.do",
+        "isCustom": false,
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "id": "legal-framework",
+    "title": "Legal Framework",
+    "links": [
+      {
+        "id": "r-5",
+        "label": "Kazarian v. USCIS (2010) — Two-Step Analysis",
+        "url": "https://casetext.com/case/kazarian-v-uscis",
+        "isCustom": false,
+        "notes": "Landmark case defining the two-step EB-1A analysis"
+      },
+      {
+        "id": "r-6",
+        "label": "AAO Decision Search",
+        "url": "https://www.uscis.gov/administrative-appeals/aao-decisions/aao-non-precedent-decisions",
+        "isCustom": false,
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "id": "finding-attorney",
+    "title": "Finding an Attorney",
+    "links": [
+      {
+        "id": "r-7",
+        "label": "AILA Lawyer Search",
+        "url": "https://www.ailalawyer.com/",
+        "isCustom": false,
+        "notes": "American Immigration Lawyers Association"
+      },
+      {
+        "id": "r-8",
+        "label": "Avvo Immigration Attorneys",
+        "url": "https://www.avvo.com/immigration-lawyer.html",
+        "isCustom": false,
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "id": "community",
+    "title": "Community & Forums",
+    "links": [
+      {
+        "id": "r-9",
+        "label": "VisaJourney EB-1A Tracker",
+        "url": "https://www.visajourney.com/",
+        "isCustom": false,
+        "notes": ""
+      },
+      {
+        "id": "r-10",
+        "label": "Trackitt EB-1A Forum",
+        "url": "https://www.trackitt.com/usa-immigration-trackers/eb1-extraordinary-ability",
+        "isCustom": false,
+        "notes": ""
+      },
+      {
+        "id": "r-11",
+        "label": "Reddit r/immigration",
+        "url": "https://www.reddit.com/r/immigration/",
+        "isCustom": false,
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "id": "reviewer-venues",
+    "title": "Reviewer Application Venues",
+    "links": [
+      {
+        "id": "r-rv-1",
+        "label": "ACL Rolling Review",
+        "url": "https://aclrollingreview.org/",
+        "isCustom": false,
+        "notes": "Covers ACL, EMNLP, NAACL, CoNLL"
+      },
+      {
+        "id": "r-rv-2",
+        "label": "TMLR (Transactions on ML Research)",
+        "url": "https://jmlr.org/tmlr/",
+        "isCustom": false,
+        "notes": "Highest EB-1A value — rolling journal"
+      },
+      {
+        "id": "r-rv-3",
+        "label": "COLM 2026",
+        "url": "https://colmweb.org/",
+        "isCustom": false,
+        "notes": "Top LLM conference"
+      },
+      {
+        "id": "r-rv-4",
+        "label": "ICML SRAS Workshop",
+        "url": "https://sras2026.space",
+        "isCustom": false,
+        "notes": "Scalable & Resilient Agentic Systems"
+      },
+      {
+        "id": "r-rv-5",
+        "label": "OpenReview (ICML workshops)",
+        "url": "https://openreview.net",
+        "isCustom": false,
+        "notes": "Check Apr 15 for workshop reviewer openings"
+      },
+      {
+        "id": "r-rv-6",
+        "label": "NeurIPS Blog",
+        "url": "https://blog.neurips.cc",
+        "isCustom": false,
+        "notes": "Check May 1 for self-nomination form"
+      }
+    ]
+  },
+  {
+    "id": "tips",
+    "title": "Evidence Strengthening Tips",
+    "links": [
+      {
+        "id": "r-12",
+        "label": "EB-1A Criteria Guide (VisaNation)",
+        "url": "https://www.visanation.com/eb-1a-visa",
+        "isCustom": false,
+        "notes": "Per-criterion guidance on what makes evidence strong vs weak"
+      }
+    ]
+  }
+]

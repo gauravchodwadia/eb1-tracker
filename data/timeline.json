@@ -1,0 +1,230 @@
+[
+  {
+    "id": "phase-1",
+    "phase": "Phase 1: Self-Assessment & Criterion Building",
+    "targetStartDate": "2026-03-01",
+    "targetEndDate": "2026-06-30",
+    "defaultRange": "Month 1-4 (Mar–Jun 2026)",
+    "status": "in_progress",
+    "description": "Evaluate profile against 10 criteria, build reviewer portfolio (judging criterion), claim existing publications, begin media outreach. Currently focused on reviewer applications.",
+    "tasks": [
+      {
+        "id": "t1-1",
+        "label": "Review all 10 EB-1A criteria",
+        "completed": true
+      },
+      {
+        "id": "t1-2",
+        "label": "Rate strength for each criterion",
+        "completed": true
+      },
+      {
+        "id": "t1-3",
+        "label": "Enroll as reviewer for CVPR 2026 + ICLR 2026",
+        "completed": true
+      },
+      {
+        "id": "t1-4",
+        "label": "Apply to review for 5+ additional venues (ACL ARR, COLM, UAI, TMLR, ACM CAIS)",
+        "completed": true
+      },
+      {
+        "id": "t1-5",
+        "label": "Send remaining draft applications (PAAMS, ICML SRAS, Springer, IJCAI, JAIR, IEEE TNNLS)",
+        "completed": false
+      },
+      {
+        "id": "t1-6",
+        "label": "Claim ICMLA paper on OpenReview/Semantic Scholar",
+        "completed": false
+      },
+      {
+        "id": "t1-7",
+        "label": "Sign up for HARO / Qwoted for press coverage",
+        "completed": false
+      },
+      {
+        "id": "t1-8",
+        "label": "Begin writing survey article(s) for arXiv",
+        "completed": false
+      },
+      {
+        "id": "t1-9",
+        "label": "Check NeurIPS 2026 self-nomination (May 1)",
+        "completed": false
+      }
+    ],
+    "notes": "Priority order: Judging (highest) → Publications → Media → Original Contributions.\nJournal reviews (TMLR, JAIR, AIJ, IEEE TNNLS) are higher EB-1A value than conference workshops.",
+    "updatedAt": "2026-03-28T00:04:11.042Z"
+  },
+  {
+    "id": "phase-2",
+    "phase": "Phase 2: Attorney Consultation",
+    "targetStartDate": "2026-07-01",
+    "targetEndDate": "2026-09-30",
+    "defaultRange": "Month 5-7 (Jul–Sep 2026)",
+    "status": "not_started",
+    "description": "Consult 2-3 experienced EB-1A attorneys with reviewer portfolio and evidence in hand. Get case evaluation, select and engage attorney.",
+    "tasks": [
+      {
+        "id": "t2-1",
+        "label": "Research and shortlist EB-1A attorneys",
+        "completed": false
+      },
+      {
+        "id": "t2-2",
+        "label": "Schedule consultations (bring reviewer confirmations + evidence)",
+        "completed": false
+      },
+      {
+        "id": "t2-3",
+        "label": "Compare evaluations and fees",
+        "completed": false
+      },
+      {
+        "id": "t2-4",
+        "label": "Sign engagement letter",
+        "completed": false
+      }
+    ],
+    "notes": "Attorney guidance: 3 criteria minimum; stronger case with 4-5 well-documented ones.",
+    "updatedAt": "2026-03-28T00:04:11.042Z"
+  },
+  {
+    "id": "phase-3",
+    "phase": "Phase 3: Evidence Collection & Documentation",
+    "targetStartDate": "2026-10-01",
+    "targetEndDate": "2027-03-31",
+    "defaultRange": "Month 8-13 (Oct 2026–Mar 2027)",
+    "status": "not_started",
+    "description": "Systematically collect all documentary evidence, request and finalize recommendation letters, continue building reviewer portfolio.",
+    "tasks": [
+      {
+        "id": "t3-1",
+        "label": "Gather all personal documents",
+        "completed": false
+      },
+      {
+        "id": "t3-2",
+        "label": "Collect salary documentation (W-2, offer letters, pay stubs)",
+        "completed": false
+      },
+      {
+        "id": "t3-3",
+        "label": "Document Marty project for Original Contributions claim",
+        "completed": false
+      },
+      {
+        "id": "t3-4",
+        "label": "Compile all reviewer confirmation letters",
+        "completed": false
+      },
+      {
+        "id": "t3-5",
+        "label": "Request 6-8 recommendation letters",
+        "completed": false
+      },
+      {
+        "id": "t3-6",
+        "label": "Follow up on pending items",
+        "completed": false
+      }
+    ],
+    "notes": "",
+    "updatedAt": "2026-03-28T00:04:11.042Z"
+  },
+  {
+    "id": "phase-4",
+    "phase": "Phase 4: Petition Preparation",
+    "targetStartDate": "2027-04-01",
+    "targetEndDate": "2027-07-31",
+    "defaultRange": "Month 14-17 (Apr–Jul 2027)",
+    "status": "not_started",
+    "description": "Draft petition letter with attorney, organize exhibit tabs, prepare filing package.",
+    "tasks": [
+      {
+        "id": "t4-1",
+        "label": "Draft petition cover letter",
+        "completed": false
+      },
+      {
+        "id": "t4-2",
+        "label": "Organize exhibits by criterion",
+        "completed": false
+      },
+      {
+        "id": "t4-3",
+        "label": "Review complete package with attorney",
+        "completed": false
+      },
+      {
+        "id": "t4-4",
+        "label": "Prepare filing forms (I-140, G-28)",
+        "completed": false
+      }
+    ],
+    "notes": "",
+    "updatedAt": "2026-03-28T00:04:11.042Z"
+  },
+  {
+    "id": "phase-5",
+    "phase": "Phase 5: Filing",
+    "targetStartDate": "2027-08-01",
+    "targetEndDate": "2027-09-30",
+    "defaultRange": "Month 18-19 (Aug–Sep 2027)",
+    "status": "not_started",
+    "description": "File I-140, optionally elect premium processing, monitor case online.",
+    "tasks": [
+      {
+        "id": "t5-1",
+        "label": "Submit I-140 petition",
+        "completed": false
+      },
+      {
+        "id": "t5-2",
+        "label": "Elect premium processing (optional)",
+        "completed": false
+      },
+      {
+        "id": "t5-3",
+        "label": "Receive receipt notice",
+        "completed": false
+      }
+    ],
+    "notes": "Target filing: Sep 2027",
+    "updatedAt": "2026-03-28T00:04:11.042Z"
+  },
+  {
+    "id": "phase-6",
+    "phase": "Phase 6: Post-Filing",
+    "targetStartDate": "2027-10-01",
+    "targetEndDate": null,
+    "defaultRange": "Month 19+ (Oct 2027+)",
+    "status": "not_started",
+    "description": "Respond to RFE if received (87-day deadline), receive approval, begin I-485 / consular processing.",
+    "tasks": [
+      {
+        "id": "t6-1",
+        "label": "Monitor case status online",
+        "completed": false
+      },
+      {
+        "id": "t6-2",
+        "label": "Respond to RFE if issued (87-day deadline)",
+        "completed": false
+      },
+      {
+        "id": "t6-3",
+        "label": "Receive approval notice",
+        "completed": false
+      },
+      {
+        "id": "t6-4",
+        "label": "Begin I-485 or consular processing",
+        "completed": false
+      }
+    ],
+    "notes": "Mukherji v. Miller (D. Neb., Jan 2026): District court ruling re USCIS final merits review — relevant context but district-level only.",
+    "updatedAt": "2026-03-28T00:04:11.042Z"
+  }
+]

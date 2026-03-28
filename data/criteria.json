@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "title": "Awards or Prizes",
+    "shortDescription": "Documentation of the beneficiary's receipt of nationally or internationally recognized prizes or awards for excellence in the field of endeavor.",
+    "status": "not_started",
+    "strengthScore": 0,
+    "notes": "No known awards. Not actively targeted.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 2,
+    "title": "Membership in Associations",
+    "shortDescription": "Documentation of the beneficiary's membership in associations in the field which require outstanding achievements of their members, as judged by recognized national or international experts.",
+    "status": "not_started",
+    "strengthScore": 0,
+    "notes": "Not actively targeted.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 3,
+    "title": "Published Material About the Applicant",
+    "shortDescription": "Published material in professional or major trade publications or major media about the beneficiary, relating to the beneficiary's work in the field.",
+    "status": "not_started",
+    "strengthScore": 0,
+    "notes": "PLANNED: Use HARO and Qwoted to get quoted by journalists on AI topics. Publish thought leadership on LLMs for enterprise, RAG in production, multi-agent system design. No outreach sent yet.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 4,
+    "title": "Judging the Work of Others",
+    "shortDescription": "Evidence of the beneficiary's participation on a panel, or individually, as a judge of the work of others in the same or an allied field of specialization.",
+    "status": "evidence_gathering",
+    "strengthScore": 3,
+    "notes": "HIGHEST PRIORITY criterion being built.\n\nENROLLED: CVPR 2026, ICLR 2026 workshops.\nAPPLIED (awaiting): ACL ARR, COLM 2026, UAI 2026, TMLR, ACM CAIS.\nDRAFTS READY: PAAMS 2026, ICML SRAS Workshop, Applied Intelligence (Springer), IJCAI-ECAI, JAIR, IEEE TNNLS, ACM TIST, AIJ, KDD workshops.\nFUTURE: NeurIPS 2026 (May), ICML workshops (Apr).\n\nStrategy: Journal > Conference workshop in USCIS officers' eyes. TMLR, JAIR, AIJ, IEEE TNNLS are highest value.\nDifferentiator: Industry practitioner framing — deploying production agentic systems at Walmart scale.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 5,
+    "title": "Original Contributions of Major Significance",
+    "shortDescription": "Evidence of the beneficiary's original scientific, scholarly, artistic, athletic, or business-related contributions of major significance in the field.",
+    "status": "researching",
+    "strengthScore": 1,
+    "notes": "Potentially supportable: \"Marty\" — Walmart's first Agentic AI assistant for Marketplace Sellers (LangGraph, LangChain, FastAPI, Postgres, Redis, SSE streaming). Could be framed as an industry-first original contribution. Not formally documented yet.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 6,
+    "title": "Authorship of Scholarly Articles",
+    "shortDescription": "Evidence of the beneficiary's authorship of scholarly articles in professional or major trade publications or other major media.",
+    "status": "weak",
+    "strengthScore": 1,
+    "notes": "EXISTING: \"Supervised Question Answering System for Technical Support\" — IEEE ICMLA 2017 (DOI: 10.1109/ICMLA.2017.00-60). ~2 citations. Paper NOT yet indexed on OpenReview — needs to be claimed via Semantic Scholar.\n\nACTION PLAN: Write survey articles on arXiv/ResearchGate. Target IEEE Transactions, top NLP venues. Topics: LLMs for enterprise, RAG in production, multi-agent system design.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 7,
+    "title": "Artistic Exhibitions or Showcases",
+    "shortDescription": "Evidence of the display of the beneficiary's work in the field at artistic exhibitions or showcases.",
+    "status": "not_applicable",
+    "strengthScore": 0,
+    "notes": "N/A — not applicable to software engineering / ML field.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 8,
+    "title": "Leading or Critical Role",
+    "shortDescription": "Evidence that the beneficiary has performed in a leading or critical role for organizations or establishments that have a distinguished reputation.",
+    "status": "researching",
+    "strengthScore": 1,
+    "notes": "Potentially supportable: Staff SWE at Walmart Global Tech, leading the Marty agentic AI project. Could argue critical role for a Fortune 1 company. Not formally pursued yet.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 9,
+    "title": "High Salary or Remuneration",
+    "shortDescription": "Evidence that the beneficiary has commanded a high salary or other significantly high remuneration for services in relation to others in the field.",
+    "status": "strong",
+    "strengthScore": 5,
+    "notes": "QUALIFIES — Strong. Staff SWE compensation at Walmart Global Tech. Considered a strong, defensible criterion. No additional action needed; documentation required at filing time.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  },
+  {
+    "id": 10,
+    "title": "Commercial Success in Performing Arts",
+    "shortDescription": "Evidence of commercial successes in the performing arts, as shown by box office receipts or record, cassette, compact disk, or video sales.",
+    "status": "not_applicable",
+    "strengthScore": 0,
+    "notes": "N/A — not applicable.",
+    "updatedAt": "2026-03-27T23:48:13.543Z"
+  }
+]
