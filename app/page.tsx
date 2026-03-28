@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useData } from "@/lib/hooks";
 import { daysUntil, formatRelativeTime } from "@/lib/utils";
 import ProgressBar from "@/components/ui/ProgressBar";
@@ -24,6 +26,25 @@ import {
 } from "lucide-react";
 
 export default function DashboardPage() {
+  const [repoChecked, setRepoChecked] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/check-repo")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.exists) {
+          router.push("/setup");
+        } else {
+          setRepoChecked(true);
+        }
+      })
+      .catch(() => {
+        // If check fails, proceed to dashboard anyway
+        setRepoChecked(true);
+      });
+  }, [router]);
+
   const { data: criteria } = useData<CriteriaData>("criteria");
   const { data: evidence } = useData<EvidenceData>("evidence");
   const { data: letters } = useData<LettersData>("letters");
@@ -32,7 +53,7 @@ export default function DashboardPage() {
   const { data: activity } = useData<ActivityData>("activity");
   const { data: settings } = useData<Settings>("settings");
 
-  if (!criteria || !evidence || !letters || !checklist || !timeline || !activity || !settings) {
+  if (!repoChecked || !criteria || !evidence || !letters || !checklist || !timeline || !activity || !settings) {
     return <DashboardSkeleton />;
   }
 

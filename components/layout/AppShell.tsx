@@ -1,9 +1,17 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import DesktopSidebar from "./DesktopSidebar";
 import BottomTabBar from "./BottomTabBar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const hideNav = pathname === "/login" || pathname === "/setup";
+
+  if (hideNav) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex min-h-screen">
       <DesktopSidebar />
