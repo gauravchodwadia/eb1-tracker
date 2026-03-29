@@ -2,7 +2,7 @@ import { getDefault } from "./defaults";
 
 const GITHUB_DATA_BRANCH = process.env.GITHUB_DATA_BRANCH || "main";
 const GITHUB_DATA_PATH = process.env.GITHUB_DATA_PATH || "data";
-const DATA_REPO_NAME = process.env.DATA_REPO_NAME || "gc-tracker-data";
+const DATA_REPO_NAME = process.env.DATA_REPO_NAME || "eb1-tracker-data";
 
 const ALLOWED_FILES = [
   "criteria",

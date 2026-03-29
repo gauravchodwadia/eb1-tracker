@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Target,
-  GraduationCap,
   ListChecks,
   MoreHorizontal,
 } from "lucide-react";
@@ -13,10 +12,9 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/", label: "Home", icon: LayoutDashboard, match: (p: string) => p === "/" },
-  { href: "/criteria", label: "Criteria", icon: Target, match: (p: string) => p === "/criteria" || p === "/evidence" },
-  { href: "/reviewers", label: "Reviewers", icon: GraduationCap, match: (p: string) => p === "/reviewers" },
+  { href: "/criteria", label: "Criteria", icon: Target, match: (p: string) => p.startsWith("/criteria") || p === "/evidence" },
   { href: "/checklist", label: "Progress", icon: ListChecks, match: (p: string) => ["/checklist", "/timeline", "/letters"].includes(p) },
-  { href: "/more", label: "More", icon: MoreHorizontal, match: (p: string) => ["/more", "/budget", "/resources", "/settings"].includes(p) },
+  { href: "/more", label: "More", icon: MoreHorizontal, match: (p: string) => ["/more", "/budget", "/resources", "/settings", "/reviewers"].includes(p) },
 ];
 
 export default function BottomTabBar() {

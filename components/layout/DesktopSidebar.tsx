@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useData } from "@/lib/hooks";
+import type { CriteriaData, CriterionStatus } from "@/lib/types";
 import {
   LayoutDashboard,
   Target,
-  GraduationCap,
   FileText,
   Mail,
   CheckSquare,
@@ -19,12 +20,46 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+const CRITERION_SHORT_LABELS: Record<number, string> = {
+  1: "Awards",
+  2: "Memberships",
+  3: "Media",
+  4: "Judging",
+  5: "Contributions",
+  6: "Publications",
+  7: "Exhibitions",
+  8: "Critical Role",
+  9: "High Salary",
+  10: "Performing Arts",
+};
+
+function statusDotColor(status: CriterionStatus): string {
+  switch (status) {
+    case "strong":
+      return "bg-emerald-500";
+    case "researching":
+    case "evidence_gathering":
+      return "bg-amber-500";
+    case "weak":
+      return "bg-red-500";
+    case "not_applicable":
+      return "bg-zinc-600";
+    default:
+      return "bg-zinc-700";
+  }
+}
+
+const NAV_ITEMS_TOP = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/criteria", label: "Criteria", icon: Target },
-  { href: "/reviewers", label: "Reviewers", icon: GraduationCap },
+];
+
+const NAV_ITEMS_MIDDLE = [
   { href: "/evidence", label: "Evidence", icon: FileText },
   { href: "/letters", label: "Letters", icon: Mail },
+];
+
+const NAV_ITEMS_BOTTOM = [
   { href: "/checklist", label: "Checklist", icon: CheckSquare },
   { href: "/timeline", label: "Timeline", icon: Clock },
   { href: "/budget", label: "Budget", icon: DollarSign },
@@ -34,9 +69,30 @@ const NAV_ITEMS = [
 export default function DesktopSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { data: criteria } = useData<CriteriaData>("criteria");
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const targetedCriteria = criteria
+    ? criteria.filter((c) => c.targeted).sort((a, b) => b.strengthScore - a.strengthScore)
+    : [];
+
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ size?: number }> }) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+        isActive(item.href)
+          ? "bg-indigo-600/20 text-indigo-400"
+          : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+      )}
+    >
+      <item.icon size={18} />
+      {item.label}
+    </Link>
+  );
 
   return (
     <aside className="hidden lg:flex w-60 bg-zinc-900 border-r border-zinc-700/50 flex-col h-screen sticky top-0">
@@ -50,21 +106,39 @@ export default function DesktopSidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-              isActive(item.href)
-                ? "bg-indigo-600/20 text-indigo-400"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            )}
-          >
-            <item.icon size={18} />
-            {item.label}
-          </Link>
-        ))}
+        {NAV_ITEMS_TOP.map(renderNavItem)}
+
+        {/* Targeted criteria sub-items */}
+        {targetedCriteria.length > 0 && (
+          <div className="space-y-0.5 pl-4">
+            {targetedCriteria.map((c) => {
+              const href = `/criteria/${c.id}`;
+              const active = pathname === href;
+              return (
+                <Link
+                  key={c.id}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    active
+                      ? "bg-indigo-600/20 text-indigo-400"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                  )}
+                >
+                  <span className={cn("w-2 h-2 rounded-full shrink-0", statusDotColor(c.status))} />
+                  {CRITERION_SHORT_LABELS[c.id] || c.title}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {NAV_ITEMS_MIDDLE.map(renderNavItem)}
+
+        {/* Divider */}
+        <div className="border-t border-zinc-700/50 my-2" />
+
+        {NAV_ITEMS_BOTTOM.map(renderNavItem)}
       </nav>
 
       <div className="px-3 py-4 border-t border-zinc-700/50 space-y-2">

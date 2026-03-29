@@ -1,4 +1,4 @@
-const DATA_REPO_NAME = "gc-tracker-data";
+const DATA_REPO_NAME = "eb1-tracker-data";
 
 export { DATA_REPO_NAME };
 

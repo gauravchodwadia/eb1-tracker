@@ -5,7 +5,7 @@
 const now = () => new Date().toISOString();
 
 // ---------------------------------------------------------------------------
-// CLAUDE.md content (from gc-tracker-data — already generic)
+// CLAUDE.md content (from eb1-tracker-data — already generic)
 // ---------------------------------------------------------------------------
 const CLAUDE_MD = `# EB-1A Tracker — Data Repository
 
@@ -112,7 +112,7 @@ For new items, use a format like: \`{prefix}-{random}\` where prefix indicates t
 function getReadmeContent(username: string): string {
   return `# EB-1A Tracker Data
 
-Private data repository for [EB-1A Tracker](https://github.com/${username}/gc-tracker).
+Private data repository for [EB-1A Tracker](https://github.com/${username}/eb1-tracker).
 
 ## Quick start
 
@@ -166,16 +166,16 @@ function templateSettings(name: string, field: string, targetDate: string | null
 function templateCriteria() {
   const ts = now();
   return [
-    { id: 1, title: "Awards or Prizes", shortDescription: "Documentation of the beneficiary's receipt of nationally or internationally recognized prizes or awards for excellence in the field of endeavor.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 2, title: "Membership in Associations", shortDescription: "Documentation of the beneficiary's membership in associations in the field which require outstanding achievements of their members, as judged by recognized national or international experts.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 3, title: "Published Material About the Applicant", shortDescription: "Published material in professional or major trade publications or major media about the beneficiary, relating to the beneficiary's work in the field.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 4, title: "Judging the Work of Others", shortDescription: "Evidence of the beneficiary's participation on a panel, or individually, as a judge of the work of others in the same or an allied field of specialization.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 5, title: "Original Contributions of Major Significance", shortDescription: "Evidence of the beneficiary's original scientific, scholarly, artistic, athletic, or business-related contributions of major significance in the field.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 6, title: "Authorship of Scholarly Articles", shortDescription: "Evidence of the beneficiary's authorship of scholarly articles in professional or major trade publications or other major media.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 7, title: "Artistic Exhibitions or Showcases", shortDescription: "Evidence of the display of the beneficiary's work in the field at artistic exhibitions or showcases.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 8, title: "Leading or Critical Role", shortDescription: "Evidence that the beneficiary has performed in a leading or critical role for organizations or establishments that have a distinguished reputation.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 9, title: "High Salary or Remuneration", shortDescription: "Evidence that the beneficiary has commanded a high salary or other significantly high remuneration for services in relation to others in the field.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
-    { id: 10, title: "Commercial Success in Performing Arts", shortDescription: "Evidence of commercial successes in the performing arts, as shown by box office receipts or record, cassette, compact disk, or video sales.", status: "not_started", strengthScore: 0, notes: "", updatedAt: ts },
+    { id: 1, title: "Awards or Prizes", shortDescription: "Documentation of the beneficiary's receipt of nationally or internationally recognized prizes or awards for excellence in the field of endeavor.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 2, title: "Membership in Associations", shortDescription: "Documentation of the beneficiary's membership in associations in the field which require outstanding achievements of their members, as judged by recognized national or international experts.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 3, title: "Published Material About the Applicant", shortDescription: "Published material in professional or major trade publications or major media about the beneficiary, relating to the beneficiary's work in the field.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 4, title: "Judging the Work of Others", shortDescription: "Evidence of the beneficiary's participation on a panel, or individually, as a judge of the work of others in the same or an allied field of specialization.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 5, title: "Original Contributions of Major Significance", shortDescription: "Evidence of the beneficiary's original scientific, scholarly, artistic, athletic, or business-related contributions of major significance in the field.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 6, title: "Authorship of Scholarly Articles", shortDescription: "Evidence of the beneficiary's authorship of scholarly articles in professional or major trade publications or other major media.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 7, title: "Artistic Exhibitions or Showcases", shortDescription: "Evidence of the display of the beneficiary's work in the field at artistic exhibitions or showcases.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 8, title: "Leading or Critical Role", shortDescription: "Evidence that the beneficiary has performed in a leading or critical role for organizations or establishments that have a distinguished reputation.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 9, title: "High Salary or Remuneration", shortDescription: "Evidence that the beneficiary has commanded a high salary or other significantly high remuneration for services in relation to others in the field.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
+    { id: 10, title: "Commercial Success in Performing Arts", shortDescription: "Evidence of commercial successes in the performing arts, as shown by box office receipts or record, cassette, compact disk, or video sales.", status: "not_started", strengthScore: 0, targeted: false, notes: "", updatedAt: ts },
   ];
 }
 
@@ -433,6 +433,161 @@ function templateResources() {
 // Main export: getTemplateFiles
 // ---------------------------------------------------------------------------
 
+function getSkillContent(username: string): string {
+  return `# EB-1A Tracker — Claude Code Skill
+
+You are this user's dedicated EB-1A immigration assistant. You help them build and track their Extraordinary Ability petition across every conversation.
+
+**At the start of every session:** read \`MEMORY.md\` to recall their full context.
+**At the end of every session:** update \`MEMORY.md\` with anything new you learned, then commit and push.
+
+## Prerequisites
+
+Before first use, ensure these are set up:
+
+### 1. GitHub CLI (gh)
+Check if installed: \`gh --version\`
+If not installed:
+- **macOS**: \`brew install gh\`
+- **Linux**: \`sudo apt install gh\` or \`sudo dnf install gh\`
+- **Windows**: \`winget install --id GitHub.cli\`
+
+### 2. GitHub authentication
+Check if authenticated: \`gh auth status\`
+If not authenticated: ask the user to run \`gh auth login\` (interactive — they need to complete it themselves).
+
+### 3. Clone the data repo
+If \`~/eb1-tracker-data\` does not exist:
+\`\`\`
+git clone https://github.com/${username}/eb1-tracker-data.git ~/eb1-tracker-data
+\`\`\`
+
+### 4. Install this skill
+\`\`\`
+mkdir -p ~/.claude/skills/eb1a-tracker
+cp ~/eb1-tracker-data/SKILL.md ~/.claude/skills/eb1a-tracker/SKILL.md
+\`\`\`
+
+## Data repo
+
+- **GitHub**: https://github.com/${username}/eb1-tracker-data
+- **Local path**: ~/eb1-tracker-data
+- **Portal**: https://eb1-tracker.vercel.app (read-only, auto-refreshes every 30s)
+
+## Every session workflow
+
+1. \`cd ~/eb1-tracker-data\`
+2. \`git pull\` to get latest changes
+3. Read \`MEMORY.md\` to recall the user's full context
+4. Help the user with their request — edit JSON files in \`/data/\` as needed
+5. Update \`MEMORY.md\` with new information learned this session
+6. \`git add -A && git commit -m "description of change" && git push\`
+7. The portal at https://eb1-tracker.vercel.app reflects changes within 30 seconds
+
+## Data files
+
+| File | What it tracks |
+|------|---------------|
+| \`data/settings.json\` | Name, field of expertise, target filing date, attorney info |
+| \`data/criteria.json\` | The 10 EB-1A criteria — status, strength score (0-5), notes |
+| \`data/evidence.json\` | Evidence items linked to criteria |
+| \`data/reviewers.json\` | Conference/journal reviewer applications (Criterion 4) |
+| \`data/letters.json\` | Recommendation letter tracking |
+| \`data/checklist.json\` | Master document checklist |
+| \`data/timeline.json\` | Project phases and milestones |
+| \`data/budget.json\` | Cost estimates and payments |
+| \`data/resources.json\` | Curated links and references |
+
+## Common tasks
+
+**Update a criterion:**
+Edit \`data/criteria.json\` — set \`status\` to one of: \`not_started\`, \`researching\`, \`evidence_gathering\`, \`strong\`, \`weak\`, \`not_applicable\`. Set \`strengthScore\` (0-5) and \`notes\`.
+
+**Add evidence:**
+Append to the array in \`data/evidence.json\`. Required fields: \`id\` (unique string), \`criterionId\` (1-10), \`title\`, \`status\` (needed/requested/received/reviewed/final).
+
+**Add a reviewer application:**
+Append to \`data/reviewers.json\`. Key fields: \`id\`, \`venueName\`, \`venueType\` (conference/workshop/journal/artifact_eval), \`status\` (enrolled/applied/to_apply/watch/via_arr/in_progress/accepted/rejected/closed), \`relevance\` (highest/high/medium_high/medium/low).
+
+**Toggle checklist items:**
+In \`data/checklist.json\`, find the item by \`id\` and set \`checked: true/false\`.
+
+## Long-term memory
+
+This repo includes a \`MEMORY.md\` file that serves as your persistent memory for this user's EB-1A journey. Use it to remember important context across conversations.
+
+### What to store in MEMORY.md
+- User's background, role, employer, key projects
+- Attorney name, contact, advice given
+- Strategic decisions (which criteria to target, priority order)
+- Key dates and deadlines (follow-ups, filing targets, conference dates)
+- What worked and what didn't (reviewer applications accepted/rejected, evidence strategies)
+- Contacts (recommenders, conference organizers, journal editors)
+- Immigration status and history
+- Anything the user tells you that would be valuable in future conversations
+
+### How to use it
+- **Read MEMORY.md at the start of every conversation** about the EB-1A tracker
+- **Update MEMORY.md** whenever you learn something new about the user's situation
+- Write in clear, factual prose — not chat logs
+- Organize by topic with headers
+- Include dates so you know when information was recorded
+- Commit memory updates alongside data updates
+
+### Format
+\`\`\`markdown
+# EB-1A Journey — Memory
+
+## Profile
+- Name, role, employer, field...
+
+## Strategy
+- Which criteria we're targeting and why...
+
+## Key Contacts
+- Attorney, recommenders, conference contacts...
+
+## Timeline & Deadlines
+- Important dates...
+
+## Session Notes
+### 2026-03-28
+- What was discussed, decided, or learned...
+\`\`\`
+
+## Rules
+- All dates must be ISO format: \`"2026-03-28"\`
+- IDs must be unique within each file
+- \`criterionId\` links to criteria 1-10
+- Read \`CLAUDE.md\` in the repo root for full schema documentation
+- Always read \`MEMORY.md\` at the start of each session and update it at the end
+- Always commit with a clear, descriptive message
+`;
+}
+
+function getMemoryContent(name: string, field: string): string {
+  return `# EB-1A Journey — Memory
+
+## Profile
+- **Name:** ${name}
+- **Field:** ${field}
+- **Tracker created:** ${new Date().toISOString().slice(0, 10)}
+
+## Strategy
+_To be filled in after initial criteria assessment._
+
+## Key Contacts
+_Attorney, recommenders, conference contacts..._
+
+## Timeline & Deadlines
+_Important dates..._
+
+## Session Notes
+### ${new Date().toISOString().slice(0, 10)}
+- Initial tracker setup. Criteria assessment pending.
+`;
+}
+
 export function getTemplateFiles(
   name: string,
   field: string,
@@ -453,6 +608,8 @@ export function getTemplateFiles(
     { path: "data/resources.json", content: json(templateResources()) },
     { path: "data/activity.json", content: json([]) },
     { path: "CLAUDE.md", content: CLAUDE_MD },
+    { path: "SKILL.md", content: getSkillContent(username) },
+    { path: "MEMORY.md", content: getMemoryContent(name, field) },
     { path: "README.md", content: getReadmeContent(username) },
   ];
 }

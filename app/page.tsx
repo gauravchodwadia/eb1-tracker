@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useData } from "@/lib/hooks";
 import { daysUntil, formatRelativeTime } from "@/lib/utils";
-import ProgressBar from "@/components/ui/ProgressBar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type {
   CriteriaData,
+  CriterionEntry,
   EvidenceData,
   LettersData,
   ChecklistData,
@@ -21,9 +22,23 @@ import {
   Mail,
   Calendar,
   Activity,
-  TrendingUp,
   Clock,
+  ChevronRight,
 } from "lucide-react";
+
+const STATUS_PRIORITY: Record<string, number> = {
+  evidence_gathering: 0,
+  researching: 1,
+  not_started: 2,
+  weak: 3,
+  strong: 4,
+};
+
+function sortByPriority(a: CriterionEntry, b: CriterionEntry): number {
+  const pa = STATUS_PRIORITY[a.status] ?? 5;
+  const pb = STATUS_PRIORITY[b.status] ?? 5;
+  return pa - pb;
+}
 
 export default function DashboardPage() {
   const [repoChecked, setRepoChecked] = useState(false);
@@ -40,7 +55,6 @@ export default function DashboardPage() {
         }
       })
       .catch(() => {
-        // If check fails, proceed to dashboard anyway
         setRepoChecked(true);
       });
   }, [router]);
@@ -57,9 +71,13 @@ export default function DashboardPage() {
     return <DashboardSkeleton />;
   }
 
-  const criteriaMet = criteria.filter(
+  // Focus on targeted criteria only
+  const targeted = criteria.filter((c) => c.targeted);
+  const targetedCount = targeted.length;
+  const targetedMet = targeted.filter(
     (c) => c.status === "strong" && c.strengthScore >= 4
   ).length;
+
   const evidenceFinal = evidence.filter((e) => e.status === "final").length;
   const lettersReceived = letters.filter((l) => l.status === "final_signed").length;
   const checklistTotal = checklist.reduce((acc, s) => acc + s.items.length, 0);
@@ -67,7 +85,10 @@ export default function DashboardPage() {
     (acc, s) => acc + s.items.filter((i) => i.checked).length, 0
   );
 
-  const criteriaScore = Math.min(1, criteriaMet / 3) * 40;
+  // Readiness from targeted criteria only
+  const criteriaScore = targetedCount > 0
+    ? Math.min(1, targetedMet / Math.min(targetedCount, 3)) * 40
+    : 0;
   const evidenceScore = evidence.length > 0 ? (evidenceFinal / evidence.length) * 30 : 0;
   const checklistScore = checklistTotal > 0 ? (checklistChecked / checklistTotal) * 20 : 0;
   const lettersScore = Math.min(1, lettersReceived / 6) * 10;
@@ -75,6 +96,9 @@ export default function DashboardPage() {
 
   const currentPhase = timeline.find((p) => p.status === "in_progress");
   const daysTilFiling = daysUntil(settings.targetFilingDate);
+
+  // Sort targeted criteria by priority
+  const sortedTargeted = [...targeted].sort(sortByPriority);
 
   return (
     <div className="space-y-8">
@@ -87,6 +111,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="col-span-2 md:col-span-1 bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <div className="relative w-24 h-24">
@@ -109,38 +134,108 @@ export default function DashboardPage() {
           <p className="text-xs text-zinc-500 mt-2">Overall Readiness</p>
         </div>
 
-        <StatCard icon={Target} label="Criteria Met" value={`${criteriaMet} of 10`} sub="Need 3+" color="text-indigo-400" />
-        <StatCard icon={FileText} label="Evidence" value={`${evidenceFinal}`} sub={`of ${evidence.length} items final`} color="text-emerald-400" />
-        <StatCard icon={Mail} label="Letters" value={`${lettersReceived}`} sub={`of ${letters.length} total`} color="text-amber-400" />
-        <StatCard icon={Calendar} label="Days to Filing" value={daysTilFiling !== null ? `${daysTilFiling}` : "—"} sub={daysTilFiling !== null ? "days remaining" : "No target set"} color="text-purple-400" />
+        <StatCard
+          icon={Target}
+          label="Criteria Met"
+          value={`${targetedMet} of ${targetedCount}`}
+          sub="targeted (need 3+)"
+          color="text-indigo-400"
+        />
+        <StatCard
+          icon={FileText}
+          label="Evidence"
+          value={`${evidenceFinal}`}
+          sub={`of ${evidence.length} items final`}
+          color="text-emerald-400"
+        />
+        <StatCard
+          icon={Mail}
+          label="Letters"
+          value={`${lettersReceived}`}
+          sub={`of ${letters.length} total`}
+          color="text-amber-400"
+        />
+        <StatCard
+          icon={Calendar}
+          label="Days to Filing"
+          value={daysTilFiling !== null ? `${daysTilFiling}` : "\u2014"}
+          sub={daysTilFiling !== null ? "days remaining" : "No target set"}
+          color="text-purple-400"
+        />
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <TrendingUp size={18} className="text-indigo-400" /> Criteria Strength
+      {/* Targeted Criteria Cards */}
+      {sortedTargeted.length > 0 && (
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Target size={18} className="text-indigo-400" /> Targeted Criteria
           </h2>
-          <span className="text-sm text-zinc-400">
-            Meeting <span className="text-white font-medium">{criteriaMet} of 10</span> criteria (need 3+)
-          </span>
-        </div>
-        <div className="space-y-3">
-          {criteria.map((c) => (
-            <div key={c.id} className="flex items-center gap-3">
-              <span className="text-xs text-zinc-500 w-6 text-right shrink-0">{c.id}.</span>
-              <span className="text-sm text-zinc-300 w-48 truncate shrink-0">{c.title}</span>
-              <div className="flex-1">
-                <ProgressBar
-                  value={c.strengthScore} max={5}
-                  color={c.strengthScore >= 4 ? "bg-emerald-500" : c.strengthScore >= 2 ? "bg-amber-500" : c.status === "not_applicable" ? "bg-zinc-600" : "bg-red-500"}
-                />
-              </div>
-              <span className="text-xs text-zinc-500 w-8 text-right shrink-0">{c.strengthScore}/5</span>
-            </div>
-          ))}
-        </div>
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {sortedTargeted.map((c) => {
+              const evidenceForCriterion = evidence.filter(
+                (e) => e.criterionId === c.id
+              );
+              const notesSummary = c.notes
+                ? c.notes.length > 80
+                  ? c.notes.slice(0, 80) + "\u2026"
+                  : c.notes
+                : null;
 
+              return (
+                <Link
+                  key={c.id}
+                  href={`/criteria/${c.id}`}
+                  className="block bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-indigo-500/50 hover:bg-zinc-800/50 transition-colors group"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <h3 className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors leading-snug">
+                      {c.title}
+                    </h3>
+                    <ChevronRight
+                      size={16}
+                      className="text-zinc-600 group-hover:text-indigo-400 transition-colors shrink-0 mt-0.5"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 mb-3">
+                    <StatusBadge status={c.status} />
+                    <span className="text-xs text-zinc-500">
+                      {evidenceForCriterion.length} evidence item{evidenceForCriterion.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {/* Strength dots */}
+                  <div className="flex items-center gap-1.5 mb-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          i < c.strengthScore
+                            ? c.strengthScore >= 4
+                              ? "bg-emerald-500"
+                              : c.strengthScore >= 2
+                                ? "bg-amber-500"
+                                : "bg-red-500"
+                            : "bg-zinc-700"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-xs text-zinc-500 ml-1">{c.strengthScore}/5</span>
+                  </div>
+
+                  {notesSummary && (
+                    <p className="text-xs text-zinc-500 leading-relaxed">
+                      {notesSummary}
+                    </p>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Current Phase + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -157,7 +252,7 @@ export default function DashboardPage() {
                 {currentPhase.tasks.map((t) => (
                   <div key={t.id} className="flex items-center gap-2 text-sm">
                     <span className={t.completed ? "text-emerald-400" : "text-zinc-600"}>
-                      {t.completed ? "✓" : "○"}
+                      {t.completed ? "\u2713" : "\u25CB"}
                     </span>
                     <span className={t.completed ? "text-zinc-500 line-through" : "text-zinc-300"}>
                       {t.label}
@@ -192,14 +287,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-white">Checklist Progress</h2>
-          <span className="text-sm text-zinc-400">{checklistChecked} of {checklistTotal} items</span>
-        </div>
-        <ProgressBar value={checklistChecked} max={checklistTotal} color="bg-indigo-500" className="h-3" />
-      </div>
     </div>
   );
 }
@@ -229,7 +316,16 @@ function DashboardSkeleton() {
           <div key={i} className="h-32 bg-zinc-900 border border-zinc-800 rounded-xl" />
         ))}
       </div>
-      <div className="h-64 bg-zinc-900 border border-zinc-800 rounded-xl" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-40 bg-zinc-900 border border-zinc-800 rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="h-48 bg-zinc-900 border border-zinc-800 rounded-xl" />
+        ))}
+      </div>
     </div>
   );
 }

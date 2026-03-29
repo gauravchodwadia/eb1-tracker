@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useData } from "@/lib/hooks";
 import { CriteriaData, EvidenceData, CriterionStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 
 const EB1A_CRITERIA: { id: number; title: string; description: string }[] = [
   { id: 1, title: "Awards", description: "Nationally or internationally recognized prizes or awards for excellence in the field." },
@@ -85,6 +86,84 @@ export default function CriteriaPage() {
     }
   }
 
+  // Split into targeted and non-targeted, sorted appropriately
+  const targeted = data
+    .filter((c) => c.targeted)
+    .sort((a, b) => b.strengthScore - a.strengthScore);
+  const nonTargeted = data.filter((c) => !c.targeted);
+
+  const renderCard = (criterion: CriteriaData[number], isTargeted: boolean) => {
+    const meta = EB1A_CRITERIA.find((c) => c.id === criterion.id) ?? {
+      title: `Criterion ${criterion.id}`,
+      description: criterion.shortDescription,
+    };
+    const evidenceCount = evidenceCountByCriterion[criterion.id] || 0;
+
+    const cardContent = (
+      <div
+        className={cn(
+          "bg-zinc-800/60 border rounded-xl border-l-4 p-5 space-y-3 transition-colors",
+          isTargeted
+            ? cn("border-l-indigo-500 border-indigo-500/30 hover:border-indigo-500/50", borderColor(criterion.status).replace("border-l-", "").length ? "" : "")
+            : cn("border-zinc-700 opacity-60", borderColor(criterion.status)),
+          isTargeted ? "border-l-indigo-500" : borderColor(criterion.status)
+        )}
+      >
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className={cn("font-semibold text-base", isTargeted ? "text-white" : "text-zinc-400")}>
+                <span className="text-zinc-500 mr-1.5">{criterion.id}.</span>
+                {meta.title}
+              </h3>
+              {isTargeted && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 uppercase tracking-wide">
+                  Targeted
+                </span>
+              )}
+            </div>
+            <p className={cn("text-sm mt-1 leading-relaxed", isTargeted ? "text-zinc-400" : "text-zinc-500")}>{meta.description}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {evidenceCount > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-500/15 text-indigo-300">
+                {evidenceCount} evidence
+              </span>
+            )}
+            {isTargeted && (
+              <ChevronRight size={16} className="text-zinc-500" />
+            )}
+          </div>
+        </div>
+
+        {/* Status and strength */}
+        <div className="flex flex-wrap items-center gap-4">
+          <StatusBadge status={criterion.status} />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500">Strength</span>
+            <StrengthDots score={criterion.strengthScore} />
+          </div>
+        </div>
+
+        {/* Notes */}
+        {criterion.notes && (
+          <p className="text-sm text-zinc-400 leading-relaxed">{criterion.notes}</p>
+        )}
+      </div>
+    );
+
+    if (isTargeted) {
+      return (
+        <Link key={criterion.id} href={`/criteria/${criterion.id}`} className="block">
+          {cardContent}
+        </Link>
+      );
+    }
+
+    return <div key={criterion.id}>{cardContent}</div>;
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
@@ -111,55 +190,31 @@ export default function CriteriaPage() {
       {data.length === 0 ? (
         <EmptyState title="No criteria data" description="Criteria information is not available yet." />
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {data.map((criterion) => {
-            const meta = EB1A_CRITERIA.find((c) => c.id === criterion.id) ?? {
-              title: `Criterion ${criterion.id}`,
-              description: criterion.shortDescription,
-            };
-            const evidenceCount = evidenceCountByCriterion[criterion.id] || 0;
-
-            return (
-              <div
-                key={criterion.id}
-                className={cn(
-                  "bg-zinc-800/60 border border-zinc-700 rounded-xl border-l-4 p-5 space-y-3",
-                  borderColor(criterion.status)
-                )}
-              >
-                {/* Header row */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-white font-semibold text-base">
-                      <span className="text-zinc-500 mr-1.5">{criterion.id}.</span>
-                      {meta.title}
-                    </h3>
-                    <p className="text-zinc-400 text-sm mt-1 leading-relaxed">{meta.description}</p>
-                  </div>
-                  {evidenceCount > 0 && (
-                    <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-500/15 text-indigo-300">
-                      {evidenceCount} evidence
-                    </span>
-                  )}
-                </div>
-
-                {/* Status and strength */}
-                <div className="flex flex-wrap items-center gap-4">
-                  <StatusBadge status={criterion.status} />
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">Strength</span>
-                    <StrengthDots score={criterion.strengthScore} />
-                  </div>
-                </div>
-
-                {/* Notes */}
-                {criterion.notes && (
-                  <p className="text-sm text-zinc-400 leading-relaxed">{criterion.notes}</p>
-                )}
+        <>
+          {/* Targeted criteria */}
+          {targeted.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-sm font-semibold text-indigo-400 uppercase tracking-wider">
+                Targeted Criteria ({targeted.length})
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                {targeted.map((c) => renderCard(c, true))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+
+          {/* Non-targeted criteria */}
+          {nonTargeted.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">
+                Other Criteria ({nonTargeted.length})
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                {nonTargeted.map((c) => renderCard(c, false))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

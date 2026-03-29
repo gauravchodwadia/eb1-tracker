@@ -21,8 +21,16 @@ export default function SetupPage() {
   const [targetDate, setTargetDate] = useState("");
   const [step, setStep] = useState<SetupStep>("form");
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
   const [repoUrl, setRepoUrl] = useState<string | null>(null);
+
+  const username = session?.username || session?.user?.name || "USERNAME";
+
+  function handleCopy(id: string, text: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -171,33 +179,20 @@ export default function SetupPage() {
               <span className="text-sm font-medium">Your tracker is ready!</span>
             </div>
 
-            {/* Claude Code prompt */}
+            {/* Single prompt for Claude Code */}
             <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5 space-y-3">
               <div className="flex items-center gap-2 text-indigo-400">
                 <Terminal size={16} />
-                <span className="text-sm font-medium">Next step: Customize with Claude Code</span>
+                <span className="text-sm font-medium">Open Claude Code and paste this prompt</span>
               </div>
               <p className="text-xs text-zinc-400">
-                Open Claude Code in your terminal and paste this prompt to personalize your tracker:
+                Claude will clone your data repo, install the EB-1A tracker skill, and walk you through setting up your profile.
               </p>
-              <div className="relative">
-                <pre className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs text-zinc-300 whitespace-pre-wrap overflow-x-auto">
-{`Read the CLAUDE.md file at https://github.com/${session?.username || "USERNAME"}/gc-tracker-data/blob/main/CLAUDE.md — then help me set up my EB-1A tracker. I'm a ${field || "professional"} in ${name ? name + "'s" : "my"} field. Walk me through each criterion and help me assess my profile.`}
-                </pre>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `Read the CLAUDE.md file at https://github.com/${session?.username || "USERNAME"}/gc-tracker-data/blob/main/CLAUDE.md — then help me set up my EB-1A tracker. I'm a ${field || "professional"} in ${name ? name + "'s" : "my"} field. Walk me through each criterion and help me assess my profile.`
-                    );
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className="absolute top-2 right-2 p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
-                  title="Copy to clipboard"
-                >
-                  {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                </button>
-              </div>
+              <CopyBlock
+                text={`Clone https://github.com/${username}/eb1-tracker-data.git to ~/eb1-tracker-data and read the SKILL.md file. Install it as a Claude Code skill at ~/.claude/skills/eb1a-tracker/SKILL.md — then read CLAUDE.md and MEMORY.md. Help me set up my EB-1A tracker. My name is ${name} and my field is ${field}. Walk me through each of the 10 criteria, assess my current strength, update the JSON data files, and save everything you learn about me to MEMORY.md.`}
+                copied={copied === "prompt"}
+                onCopy={() => handleCopy("prompt", `Clone https://github.com/${username}/eb1-tracker-data.git to ~/eb1-tracker-data and read the SKILL.md file. Install it as a Claude Code skill at ~/.claude/skills/eb1a-tracker/SKILL.md — then read CLAUDE.md and MEMORY.md. Help me set up my EB-1A tracker. My name is ${name} and my field is ${field}. Walk me through each of the 10 criteria, assess my current strength, update the JSON data files, and save everything you learn about me to MEMORY.md.`)}
+              />
             </div>
 
             {/* Go to dashboard */}
@@ -266,6 +261,35 @@ function ProgressStep({
       >
         {label}
       </span>
+    </div>
+  );
+}
+
+function CopyBlock({
+  text,
+  copied,
+  onCopy,
+}: {
+  text: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <div className="relative">
+      <pre className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 pr-10 text-xs text-zinc-300 whitespace-pre-wrap overflow-x-auto">
+        {text}
+      </pre>
+      <button
+        onClick={onCopy}
+        className="absolute top-2 right-2 p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+        title="Copy to clipboard"
+      >
+        {copied ? (
+          <Check size={14} className="text-emerald-400" />
+        ) : (
+          <Copy size={14} />
+        )}
+      </button>
     </div>
   );
 }

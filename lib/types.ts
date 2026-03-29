@@ -25,6 +25,7 @@ export interface CriterionEntry {
   shortDescription: string;
   status: CriterionStatus;
   strengthScore: number; // 0-5
+  targeted: boolean; // whether the user is actively building this criterion
   notes: string;
   updatedAt: string;
 }
