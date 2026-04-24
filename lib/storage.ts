@@ -26,6 +26,7 @@ export function isAllowedFile(filename: string): filename is AllowedFile {
 export interface GitHubContext {
   token: string;
   username: string;
+  owner?: string;
 }
 
 // === GitHub backend ===
@@ -34,7 +35,7 @@ async function readFromGitHub(
   filename: string,
   ctx: GitHubContext
 ): Promise<unknown> {
-  const repo = `${ctx.username}/${DATA_REPO_NAME}`;
+  const repo = `${ctx.owner || ctx.username}/${DATA_REPO_NAME}`;
   const url = `https://api.github.com/repos/${repo}/contents/${GITHUB_DATA_PATH}/${filename}.json?ref=${GITHUB_DATA_BRANCH}`;
 
   const res = await fetch(url, {

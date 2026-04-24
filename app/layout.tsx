@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description: "Track your EB-1A Extraordinary Ability petition progress",
 };
 
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

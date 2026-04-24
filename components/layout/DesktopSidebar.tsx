@@ -18,7 +18,9 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { Suspense } from "react";
 import { cn } from "@/lib/utils";
+import ProfileSwitcher from "./ProfileSwitcher";
 
 const CRITERION_SHORT_LABELS: Record<number, string> = {
   1: "Awards",
@@ -96,13 +98,16 @@ export default function DesktopSidebar() {
 
   return (
     <aside className="hidden lg:flex w-60 bg-zinc-900 border-r border-zinc-700/50 flex-col h-screen sticky top-0">
-      <div className="p-4 border-b border-zinc-700/50">
+      <div className="p-4 border-b border-zinc-700/50 space-y-3">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
             EB
           </div>
           <span className="font-semibold text-white text-lg">EB-1A Tracker</span>
         </Link>
+        <Suspense fallback={null}>
+          <ProfileSwitcher />
+        </Suspense>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

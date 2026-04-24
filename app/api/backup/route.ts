@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { readAllData } from "@/lib/storage";
+import { resolveSelectedOwner } from "@/lib/owner";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   const ctx =
     session?.accessToken && session?.username
-      ? { token: session.accessToken, username: session.username }
+      ? {
+          token: session.accessToken,
+          username: session.username,
+          owner: resolveSelectedOwner(req, session.username),
+        }
       : undefined;
 
   const data = await readAllData(ctx);
