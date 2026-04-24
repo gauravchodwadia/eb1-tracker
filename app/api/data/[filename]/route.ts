@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAllowedFile, readData } from "@/lib/storage";
+import { resolveSelectedOwner } from "@/lib/owner";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
@@ -15,7 +16,11 @@ export async function GET(
   const session = await auth();
   const ctx =
     session?.accessToken && session?.username
-      ? { token: session.accessToken, username: session.username }
+      ? {
+          token: session.accessToken,
+          username: session.username,
+          owner: resolveSelectedOwner(req, session.username),
+        }
       : undefined;
 
   try {
