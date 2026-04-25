@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useData } from "@/lib/hooks";
-import { daysUntil, formatRelativeTime } from "@/lib/utils";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { daysUntil, formatRelativeTime, cn } from "@/lib/utils";
 import type {
   CriteriaData,
   CriterionEntry,
+  CriterionStatus,
   EvidenceData,
   LettersData,
   ChecklistData,
@@ -16,28 +16,44 @@ import type {
   ActivityData,
   Settings,
 } from "@/lib/types";
-import {
-  Target,
-  FileText,
-  Mail,
-  Calendar,
-  Activity,
-  Clock,
-  ChevronRight,
-} from "lucide-react";
 
-const STATUS_PRIORITY: Record<string, number> = {
+const STATUS_PRIORITY: Record<CriterionStatus, number> = {
   evidence_gathering: 0,
   researching: 1,
   not_started: 2,
   weak: 3,
   strong: 4,
+  not_applicable: 5,
 };
 
-function sortByPriority(a: CriterionEntry, b: CriterionEntry): number {
-  const pa = STATUS_PRIORITY[a.status] ?? 5;
-  const pb = STATUS_PRIORITY[b.status] ?? 5;
-  return pa - pb;
+const STATUS_LABEL: Record<CriterionStatus, string> = {
+  not_started: "Not started",
+  researching: "Researching",
+  evidence_gathering: "Evidence",
+  strong: "Strong",
+  weak: "Weak",
+  not_applicable: "N/A",
+};
+
+const STATUS_TONE: Record<CriterionStatus, string> = {
+  not_started: "text-zinc-500 bg-zinc-500/10 ring-zinc-500/20",
+  researching: "text-sky-300 bg-sky-400/10 ring-sky-400/20",
+  evidence_gathering: "text-amber-300 bg-amber-400/10 ring-amber-400/20",
+  strong: "text-emerald-300 bg-emerald-400/10 ring-emerald-400/20",
+  weak: "text-rose-300 bg-rose-400/10 ring-rose-400/20",
+  not_applicable: "text-zinc-600 bg-zinc-500/5 ring-zinc-500/10",
+};
+
+function readinessTone(n: number): string {
+  if (n >= 70) return "text-emerald-300";
+  if (n >= 40) return "text-amber-300";
+  return "text-rose-300";
+}
+
+function readinessBar(n: number): string {
+  if (n >= 70) return "bg-emerald-400";
+  if (n >= 40) return "bg-amber-400";
+  return "bg-rose-400";
 }
 
 export default function DashboardPage() {
@@ -48,15 +64,10 @@ export default function DashboardPage() {
     fetch("/api/check-repo")
       .then((r) => r.json())
       .then((data) => {
-        if (!data.exists) {
-          router.push("/setup");
-        } else {
-          setRepoChecked(true);
-        }
+        if (!data.exists) router.push("/setup");
+        else setRepoChecked(true);
       })
-      .catch(() => {
-        setRepoChecked(true);
-      });
+      .catch(() => setRepoChecked(true));
   }, [router]);
 
   const { data: criteria } = useData<CriteriaData>("criteria");
@@ -67,17 +78,19 @@ export default function DashboardPage() {
   const { data: activity } = useData<ActivityData>("activity");
   const { data: settings } = useData<Settings>("settings");
 
-  if (!repoChecked || !criteria || !evidence || !letters || !checklist || !timeline || !activity || !settings) {
+  if (
+    !repoChecked ||
+    !criteria || !evidence || !letters ||
+    !checklist || !timeline || !activity || !settings
+  ) {
     return <DashboardSkeleton />;
   }
 
-  // Focus on targeted criteria only
   const targeted = criteria.filter((c) => c.targeted);
   const targetedCount = targeted.length;
   const targetedMet = targeted.filter(
     (c) => c.status === "strong" && c.strengthScore >= 4
   ).length;
-
   const evidenceFinal = evidence.filter((e) => e.status === "final").length;
   const lettersReceived = letters.filter((l) => l.status === "final_signed").length;
   const checklistTotal = checklist.reduce((acc, s) => acc + s.items.length, 0);
@@ -85,247 +98,270 @@ export default function DashboardPage() {
     (acc, s) => acc + s.items.filter((i) => i.checked).length, 0
   );
 
-  // Readiness from targeted criteria only
   const criteriaScore = targetedCount > 0
     ? Math.min(1, targetedMet / Math.min(targetedCount, 3)) * 40
     : 0;
-  const evidenceScore = evidence.length > 0 ? (evidenceFinal / evidence.length) * 30 : 0;
-  const checklistScore = checklistTotal > 0 ? (checklistChecked / checklistTotal) * 20 : 0;
+  const evidenceScore = evidence.length > 0
+    ? (evidenceFinal / evidence.length) * 30
+    : 0;
+  const checklistScore = checklistTotal > 0
+    ? (checklistChecked / checklistTotal) * 20
+    : 0;
   const lettersScore = Math.min(1, lettersReceived / 6) * 10;
-  const readiness = Math.round(criteriaScore + evidenceScore + checklistScore + lettersScore);
+  const readiness = Math.round(
+    criteriaScore + evidenceScore + checklistScore + lettersScore
+  );
 
   const currentPhase = timeline.find((p) => p.status === "in_progress");
   const daysTilFiling = daysUntil(settings.targetFilingDate);
 
-  // Sort targeted criteria by priority
-  const sortedTargeted = [...targeted].sort(sortByPriority);
+  const sortedTargeted = [...targeted].sort(
+    (a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]
+  );
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-zinc-400 mt-1">
-          {settings.applicantName
-            ? `${settings.applicantName}'s EB-1A petition tracker`
-            : "Your EB-1A petition tracker"}
+    <div className="max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="border-b border-zinc-800 pb-6 mb-8">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+          {settings.applicantName || "EB-1A"} · Petition tracker
         </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="col-span-2 md:col-span-1 bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
-          <div className="relative w-24 h-24">
-            <svg className="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none" stroke="#27272a" strokeWidth="3"
-              />
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke={readiness >= 60 ? "#22c55e" : readiness >= 30 ? "#eab308" : "#ef4444"}
-                strokeWidth="3" strokeDasharray={`${readiness}, 100`} strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">{readiness}%</span>
-            </div>
+        <div className="flex items-baseline gap-4 flex-wrap">
+          <div className={cn("text-5xl font-semibold tabular-nums tracking-tight", readinessTone(readiness))}>
+            {readiness}<span className="text-2xl text-zinc-500 font-normal">%</span>
           </div>
-          <p className="text-xs text-zinc-500 mt-2">Overall Readiness</p>
+          <div className="text-sm text-zinc-500 flex flex-wrap items-baseline gap-x-5 gap-y-1 tabular-nums">
+            <span>
+              <span className="text-zinc-200">{targetedMet}</span>
+              <span className="text-zinc-600"> / </span>
+              <span className="text-zinc-300">{targetedCount}</span>
+              <span className="text-zinc-500"> criteria strong</span>
+            </span>
+            <span>
+              <span className="text-zinc-200">{evidenceFinal}</span>
+              <span className="text-zinc-600"> / </span>
+              <span className="text-zinc-300">{evidence.length}</span>
+              <span className="text-zinc-500"> evidence final</span>
+            </span>
+            <span>
+              <span className="text-zinc-200">{lettersReceived}</span>
+              <span className="text-zinc-600"> / </span>
+              <span className="text-zinc-300">{letters.length}</span>
+              <span className="text-zinc-500"> letters signed</span>
+            </span>
+            {daysTilFiling !== null && (
+              <span>
+                <span className="text-zinc-200">{daysTilFiling}</span>
+                <span className="text-zinc-500"> days to filing</span>
+              </span>
+            )}
+          </div>
         </div>
-
-        <StatCard
-          icon={Target}
-          label="Criteria Met"
-          value={`${targetedMet} of ${targetedCount}`}
-          sub="targeted (need 3+)"
-          color="text-indigo-400"
-        />
-        <StatCard
-          icon={FileText}
-          label="Evidence"
-          value={`${evidenceFinal}`}
-          sub={`of ${evidence.length} items final`}
-          color="text-emerald-400"
-        />
-        <StatCard
-          icon={Mail}
-          label="Letters"
-          value={`${lettersReceived}`}
-          sub={`of ${letters.length} total`}
-          color="text-amber-400"
-        />
-        <StatCard
-          icon={Calendar}
-          label="Days to Filing"
-          value={daysTilFiling !== null ? `${daysTilFiling}` : "\u2014"}
-          sub={daysTilFiling !== null ? "days remaining" : "No target set"}
-          color="text-purple-400"
-        />
+        <div className="mt-4 h-1 w-full bg-zinc-800/70 rounded-full overflow-hidden">
+          <div
+            className={cn("h-full rounded-full transition-all", readinessBar(readiness))}
+            style={{ width: `${Math.max(2, readiness)}%` }}
+          />
+        </div>
       </div>
 
-      {/* Targeted Criteria Cards */}
+      {/* Targeted criteria */}
       {sortedTargeted.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Target size={18} className="text-indigo-400" /> Targeted Criteria
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {sortedTargeted.map((c) => {
-              const evidenceForCriterion = evidence.filter(
-                (e) => e.criterionId === c.id
-              );
-              const notesSummary = c.notes
-                ? c.notes.length > 80
-                  ? c.notes.slice(0, 80) + "\u2026"
-                  : c.notes
-                : null;
-
-              return (
-                <Link
-                  key={c.id}
-                  href={`/criteria/${c.id}`}
-                  className="block bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-indigo-500/50 hover:bg-zinc-800/50 transition-colors group"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors leading-snug">
-                      {c.title}
-                    </h3>
-                    <ChevronRight
-                      size={16}
-                      className="text-zinc-600 group-hover:text-indigo-400 transition-colors shrink-0 mt-0.5"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3 mb-3">
-                    <StatusBadge status={c.status} />
-                    <span className="text-xs text-zinc-500">
-                      {evidenceForCriterion.length} evidence item{evidenceForCriterion.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-
-                  {/* Strength dots */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-2.5 h-2.5 rounded-full ${
-                          i < c.strengthScore
-                            ? c.strengthScore >= 4
-                              ? "bg-emerald-500"
-                              : c.strengthScore >= 2
-                                ? "bg-amber-500"
-                                : "bg-red-500"
-                            : "bg-zinc-700"
-                        }`}
-                      />
-                    ))}
-                    <span className="text-xs text-zinc-500 ml-1">{c.strengthScore}/5</span>
-                  </div>
-
-                  {notesSummary && (
-                    <p className="text-xs text-zinc-500 leading-relaxed">
-                      {notesSummary}
-                    </p>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+        <Section
+          label="Targeted criteria"
+          count={`${targetedMet} of ${targetedCount} strong`}
+        >
+          <ul className="divide-y divide-zinc-800/70">
+            {sortedTargeted.map((c) => (
+              <CriterionRow
+                key={c.id}
+                criterion={c}
+                evidenceCount={evidence.filter((e) => e.criterionId === c.id).length}
+              />
+            ))}
+          </ul>
+        </Section>
       )}
 
-      {/* Current Phase + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Clock size={18} className="text-indigo-400" /> Current Phase
-          </h2>
-          {currentPhase ? (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <StatusBadge status={currentPhase.status} />
-                <span className="text-sm font-medium text-white">{currentPhase.phase}</span>
-              </div>
-              <p className="text-sm text-zinc-400 mb-3">{currentPhase.description}</p>
-              <div className="space-y-2">
-                {currentPhase.tasks.map((t) => (
-                  <div key={t.id} className="flex items-center gap-2 text-sm">
-                    <span className={t.completed ? "text-emerald-400" : "text-zinc-600"}>
-                      {t.completed ? "\u2713" : "\u25CB"}
-                    </span>
-                    <span className={t.completed ? "text-zinc-500 line-through" : "text-zinc-300"}>
-                      {t.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-zinc-500 text-sm">No phase in progress</p>
-          )}
-        </div>
-
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Activity size={18} className="text-indigo-400" /> Recent Activity
-          </h2>
-          {activity.length > 0 ? (
-            <div className="space-y-3">
-              {activity.slice(0, 10).map((event) => (
-                <div key={event.id} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-zinc-300 truncate">{event.summary}</p>
-                    <p className="text-xs text-zinc-600">{formatRelativeTime(event.timestamp)}</p>
-                  </div>
-                </div>
+      {/* Current phase */}
+      <Section
+        label="Current phase"
+        count={currentPhase ? currentPhase.phase : "Not started"}
+      >
+        {currentPhase ? (
+          <div className="py-3">
+            <p className="text-sm text-zinc-400 mb-3">{currentPhase.description}</p>
+            <ul className="space-y-1.5">
+              {currentPhase.tasks.map((t) => (
+                <li key={t.id} className="flex items-center gap-3 text-sm">
+                  <span
+                    className={cn(
+                      "inline-block w-3 h-3 rounded-full ring-1 shrink-0",
+                      t.completed
+                        ? "bg-emerald-400/80 ring-emerald-400/30"
+                        : "bg-transparent ring-zinc-600"
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span className={t.completed ? "text-zinc-500 line-through" : "text-zinc-200"}>
+                    {t.label}
+                  </span>
+                </li>
               ))}
-            </div>
-          ) : (
-            <p className="text-zinc-500 text-sm">No activity yet. Start by reviewing your criteria.</p>
-          )}
+            </ul>
+          </div>
+        ) : (
+          <p className="py-4 text-sm text-zinc-500">No phase in progress.</p>
+        )}
+      </Section>
+
+      {/* Other counts */}
+      <Section label="Checklist" count={`${checklistChecked} of ${checklistTotal} done`}>
+        <div className="py-3">
+          <div className="h-1 w-full bg-zinc-800/70 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-400 rounded-full"
+              style={{
+                width: `${checklistTotal > 0 ? Math.max(2, (checklistChecked / checklistTotal) * 100) : 0}%`,
+              }}
+            />
+          </div>
+          <Link
+            href="/checklist"
+            className="inline-block mt-3 text-xs text-indigo-400 hover:text-indigo-300"
+          >
+            View checklist →
+          </Link>
         </div>
-      </div>
+      </Section>
+
+      {/* Recent activity */}
+      <Section
+        label="Recent activity"
+        count={activity.length === 0 ? "Nothing yet" : `${Math.min(activity.length, 8)} of ${activity.length}`}
+      >
+        {activity.length > 0 ? (
+          <ul className="divide-y divide-zinc-800/70">
+            {activity.slice(0, 8).map((event) => (
+              <li key={event.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="w-1 h-1 rounded-full bg-zinc-600 shrink-0" />
+                <span className="flex-1 min-w-0 text-zinc-300 truncate">{event.summary}</span>
+                <span className="text-[11px] tabular-nums text-zinc-600 shrink-0">
+                  {formatRelativeTime(event.timestamp)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="py-4 text-sm text-zinc-500">
+            Start by reviewing your criteria.
+          </p>
+        )}
+      </Section>
     </div>
   );
 }
 
-function StatCard({ icon: Icon, label, value, sub, color }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  label: string; value: string; sub: string; color: string;
+function Section({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: string | number;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon size={16} className={color} />
-        <span className="text-xs text-zinc-500 uppercase tracking-wider">{label}</span>
+    <section className="mb-8 last:mb-0">
+      <div className="flex items-baseline justify-between border-b border-zinc-800/70 py-2 mb-1">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+          {label}
+        </h2>
+        <span className="text-[11px] tabular-nums text-zinc-600">{count}</span>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-xs text-zinc-500 mt-1">{sub}</p>
-    </div>
+      {children}
+    </section>
+  );
+}
+
+function CriterionRow({
+  criterion: c,
+  evidenceCount,
+}: {
+  criterion: CriterionEntry;
+  evidenceCount: number;
+}) {
+  const dotTone =
+    c.strengthScore >= 4
+      ? "bg-emerald-400"
+      : c.strengthScore >= 2
+      ? "bg-amber-400"
+      : c.strengthScore > 0
+      ? "bg-rose-400"
+      : "bg-zinc-700";
+  return (
+    <li>
+      <Link
+        href={`/criteria/${c.id}`}
+        className="group flex items-center gap-3 py-2.5 pl-3 pr-2 text-sm hover:bg-zinc-900/60 transition-colors"
+      >
+        <span className="flex-1 min-w-0 truncate text-zinc-100 group-hover:text-white">
+          {c.title}
+        </span>
+
+        {/* strength dots */}
+        <span className="hidden sm:flex items-center gap-1 shrink-0" aria-label={`Strength ${c.strengthScore} of 5`}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                i < c.strengthScore ? dotTone : "bg-zinc-700"
+              )}
+            />
+          ))}
+          <span className="ml-1.5 text-[11px] tabular-nums text-zinc-500 w-8 text-right">
+            {c.strengthScore}/5
+          </span>
+        </span>
+
+        {/* evidence count */}
+        <span className="hidden md:inline text-[11px] tabular-nums text-zinc-500 w-20 text-right">
+          {evidenceCount} evidence
+        </span>
+
+        {/* status pill */}
+        <span
+          className={cn(
+            "shrink-0 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded ring-1 w-24 text-center",
+            STATUS_TONE[c.status]
+          )}
+        >
+          {STATUS_LABEL[c.status]}
+        </span>
+
+        <span className="text-zinc-700 group-hover:text-indigo-400 transition-colors text-sm">
+          ›
+        </span>
+      </Link>
+    </li>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-8 animate-pulse">
-      <div><div className="h-8 bg-zinc-800 rounded w-48" /><div className="h-4 bg-zinc-800 rounded w-64 mt-2" /></div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-32 bg-zinc-900 border border-zinc-800 rounded-xl" />
-        ))}
+    <div className="max-w-5xl mx-auto animate-pulse">
+      <div className="border-b border-zinc-800 pb-6 mb-8 space-y-3">
+        <div className="h-3 w-40 bg-zinc-800 rounded" />
+        <div className="h-12 w-32 bg-zinc-800 rounded" />
+        <div className="h-1 w-full bg-zinc-800 rounded" />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-40 bg-zinc-900 border border-zinc-800 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="h-48 bg-zinc-900 border border-zinc-800 rounded-xl" />
-        ))}
-      </div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="mb-8">
+          <div className="h-3 w-32 bg-zinc-800 rounded mb-3" />
+          <div className="h-32 bg-zinc-900/50 rounded" />
+        </div>
+      ))}
     </div>
   );
 }
