@@ -167,12 +167,18 @@ export default function ProfileSwitcher() {
             </ul>
           )}
           {profiles && selfProfile && (
-            <div className="border-t border-zinc-800 px-3 py-2 text-[11px] text-zinc-500 leading-snug">
-              Share your data: add friends as read collaborators on
-              {" "}
-              <code className="text-zinc-400">
-                {selfProfile.owner}/eb1-tracker-data
-              </code>
+            <div className="border-t border-zinc-800 px-3 py-2 text-[11px] text-zinc-500 leading-snug space-y-1">
+              <div>
+                Share your data: add friends as collaborators on{" "}
+                <code className="text-zinc-400">
+                  {selfProfile.owner}/eb1-tracker-data
+                </code>
+              </div>
+              <div className="text-zinc-600">
+                GitHub personal repos don&apos;t support read-only roles —
+                collaborators get write access too. The tracker is read-only
+                when viewing others, so this matters only on github.com itself.
+              </div>
             </div>
           )}
         </div>
