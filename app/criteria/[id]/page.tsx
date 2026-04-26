@@ -156,8 +156,49 @@ function daysFromNow(s: string | null): number | null {
 }
 
 function venueTypeLabel(t: ReviewerApplication["venueType"]): string {
-  return t === "artifact_eval" ? "Artifact" : t.charAt(0).toUpperCase() + t.slice(1);
+  if (t === "artifact_eval") return "Artifact";
+  if (t === "book_review") return "Book";
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
+
+const PAPER_REVIEW_TYPES: ReviewerApplication["venueType"][] = [
+  "conference",
+  "workshop",
+  "journal",
+  "artifact_eval",
+];
+
+type ReviewerBucket = {
+  key: string;
+  label: string;
+  description?: string;
+  match: (r: ReviewerApplication) => boolean;
+  emptyHint: string;
+};
+
+const REVIEWER_BUCKETS: ReviewerBucket[] = [
+  {
+    key: "paper_reviews",
+    label: "Paper reviews",
+    description: "Conference, workshop, journal, and artifact evaluation venues.",
+    match: (r) => PAPER_REVIEW_TYPES.includes(r.venueType),
+    emptyHint: "Add reviewer applications with venueType: conference, workshop, journal, or artifact_eval.",
+  },
+  {
+    key: "hackathons",
+    label: "Hackathons",
+    description: "Hackathon judging — invitations, confirmations, and completed events.",
+    match: (r) => r.venueType === "hackathon",
+    emptyHint: "Add entries with venueType: hackathon to your reviewers.json.",
+  },
+  {
+    key: "book_reviews",
+    label: "Book reviews",
+    description: "Peer-reviewed book reviews (e.g., ACM Computing Reviews).",
+    match: (r) => r.venueType === "book_review",
+    emptyHint: "Add entries with venueType: book_review to your reviewers.json.",
+  },
+];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -217,8 +258,34 @@ export default function CriterionPage() {
         loading={!evidence}
       />
 
-      {criterionId === 4 && <ReviewersSection />}
+      {criterionId === 4 && <JudgingActivities />}
     </div>
+  );
+}
+
+// ─── Judging activities (criterion 4) ─────────────────────────────────────────
+
+function JudgingActivities() {
+  const { data, loading } = useData<ReviewersData>("reviewers");
+
+  if (loading || !data) {
+    return (
+      <div className="mt-10 flex items-center justify-center h-24">
+        <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {REVIEWER_BUCKETS.map((bucket) => (
+        <VenueBucketSection
+          key={bucket.key}
+          bucket={bucket}
+          rows={data.filter(bucket.match)}
+        />
+      ))}
+    </>
   );
 }
 
@@ -494,10 +561,15 @@ function EvidenceRow({
   );
 }
 
-// ─── Reviewers (criterion 4) ──────────────────────────────────────────────────
+// ─── Venue bucket (paper reviews / hackathons / book reviews) ─────────────────
 
-function ReviewersSection() {
-  const { data, loading } = useData<ReviewersData>("reviewers");
+function VenueBucketSection({
+  bucket,
+  rows,
+}: {
+  bucket: ReviewerBucket;
+  rows: ReviewerApplication[];
+}) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const grouped = useMemo(() => {
@@ -508,8 +580,7 @@ function ReviewersSection() {
       watch: [],
       closed: [],
     };
-    if (!data) return out;
-    for (const r of data) {
+    for (const r of rows) {
       const g = REVIEWER_GROUPS.find((g) => g.statuses.includes(r.status));
       if (g) out[g.key].push(r);
     }
@@ -526,12 +597,11 @@ function ReviewersSection() {
       });
     }
     return out;
-  }, [data]);
+  }, [rows]);
 
   const totals = useMemo(() => {
-    if (!data) return { venues: 0, letters: 0, deadlinesSoon: 0, overdue: 0 };
     let letters = 0, deadlinesSoon = 0, overdue = 0;
-    for (const r of data) {
+    for (const r of rows) {
       if (r.letterObtained) letters++;
       const d = daysFromNow(r.followUpDate);
       if (d !== null) {
@@ -539,8 +609,8 @@ function ReviewersSection() {
         else if (d <= 14 && d >= 0) deadlinesSoon++;
       }
     }
-    return { venues: data.length, letters, deadlinesSoon, overdue };
-  }, [data]);
+    return { count: rows.length, letters, deadlinesSoon, overdue };
+  }, [rows]);
 
   function toggle(id: string) {
     setExpanded((prev) => {
@@ -554,15 +624,18 @@ function ReviewersSection() {
   return (
     <section className="mt-10">
       <SectionHeader
-        label="Reviewer applications"
+        label={bucket.label}
         meta={
           <span className="flex items-baseline gap-3 tabular-nums">
             <span className="text-zinc-500">
-              <span className="text-zinc-300">{totals.venues}</span> venues
+              <span className="text-zinc-300">{totals.count}</span>{" "}
+              {totals.count === 1 ? "venue" : "venues"}
             </span>
-            <span className="text-zinc-500">
-              <span className="text-emerald-300">{totals.letters}</span> letters
-            </span>
+            {totals.letters > 0 && (
+              <span className="text-zinc-500">
+                <span className="text-emerald-300">{totals.letters}</span> letters
+              </span>
+            )}
             {totals.deadlinesSoon > 0 && (
               <span className="text-zinc-500">
                 <span className="text-amber-300">{totals.deadlinesSoon}</span> due ≤14d
@@ -576,26 +649,22 @@ function ReviewersSection() {
           </span>
         }
       />
-      {loading || !data ? (
-        <div className="flex items-center justify-center h-24">
-          <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
-        </div>
-      ) : data.length === 0 ? (
+      {bucket.description && (
+        <p className="text-xs text-zinc-500 -mt-1 mb-3">{bucket.description}</p>
+      )}
+      {rows.length === 0 ? (
         <div className="py-6">
-          <EmptyState
-            title="No reviewer applications yet"
-            description="Add entries to reviewers.json in your data repo."
-          />
+          <EmptyState title={`No ${bucket.label.toLowerCase()} yet`} description={bucket.emptyHint} />
         </div>
       ) : (
         <div>
           {REVIEWER_GROUPS.map((g) => {
-            const rows = grouped[g.key];
-            if (rows.length === 0) return null;
+            const groupRows = grouped[g.key];
+            if (groupRows.length === 0) return null;
             return (
-              <SubSection key={g.key} label={g.label} count={rows.length}>
+              <SubSection key={g.key} label={g.label} count={groupRows.length}>
                 <ul className="divide-y divide-zinc-800/70">
-                  {rows.map((r) => (
+                  {groupRows.map((r) => (
                     <ReviewerRow
                       key={r.id}
                       reviewer={r}

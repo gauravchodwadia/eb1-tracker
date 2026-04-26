@@ -177,7 +177,13 @@ export interface ResourceSection {
 export type ResourcesData = ResourceSection[];
 
 // ===== Reviewers =====
-export type ReviewerVenueType = "conference" | "workshop" | "journal" | "artifact_eval";
+export type ReviewerVenueType =
+  | "conference"
+  | "workshop"
+  | "journal"
+  | "artifact_eval"
+  | "hackathon"
+  | "book_review";
 export type ReviewerRelevance = "highest" | "high" | "medium_high" | "medium" | "low";
 export type ReviewerStatus =
   | "enrolled"
