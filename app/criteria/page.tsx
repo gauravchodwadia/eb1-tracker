@@ -2,65 +2,55 @@
 
 import Link from "next/link";
 import { useData } from "@/lib/hooks";
-import { CriteriaData, EvidenceData, CriterionStatus } from "@/lib/types";
+import {
+  CriteriaData,
+  CriterionEntry,
+  EvidenceData,
+  CriterionStatus,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
-import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-const EB1A_CRITERIA: { id: number; title: string; description: string }[] = [
-  { id: 1, title: "Awards", description: "Nationally or internationally recognized prizes or awards for excellence in the field." },
-  { id: 2, title: "Membership", description: "Membership in associations that require outstanding achievements of their members." },
-  { id: 3, title: "Published Material", description: "Published material about you in professional or major trade publications or other major media." },
-  { id: 4, title: "Judging", description: "Participation as a judge of the work of others in the same or an allied field." },
-  { id: 5, title: "Original Contributions", description: "Original scientific, scholarly, artistic, athletic, or business-related contributions of major significance." },
-  { id: 6, title: "Scholarly Articles", description: "Authorship of scholarly articles in professional or major trade publications or other major media." },
-  { id: 7, title: "Exhibitions", description: "Display of your work at artistic exhibitions or showcases." },
-  { id: 8, title: "Leading/Critical Role", description: "Performance in a leading or critical role for organizations with a distinguished reputation." },
-  { id: 9, title: "High Salary", description: "Commanding a high salary or other significantly high remuneration relative to others in the field." },
-  { id: 10, title: "Commercial Success", description: "Commercial successes in the performing arts, as shown by box office receipts or record, cassette, compact disk, or video sales." },
-];
+const CRITERIA_TITLES: Record<number, string> = {
+  1: "Awards",
+  2: "Membership",
+  3: "Published material",
+  4: "Judging",
+  5: "Original contributions",
+  6: "Scholarly articles",
+  7: "Exhibitions",
+  8: "Leading or critical role",
+  9: "High salary",
+  10: "Commercial success",
+};
 
-function borderColor(status: CriterionStatus): string {
-  switch (status) {
-    case "strong": return "border-l-emerald-500";
-    case "researching":
-    case "evidence_gathering": return "border-l-amber-500";
-    case "weak": return "border-l-red-500";
-    case "not_applicable":
-    case "not_started":
-    default: return "border-l-zinc-600";
-  }
-}
+const STATUS_PRIORITY: Record<CriterionStatus, number> = {
+  evidence_gathering: 0,
+  researching: 1,
+  not_started: 2,
+  weak: 3,
+  strong: 4,
+  not_applicable: 5,
+};
 
-function segmentColor(status: CriterionStatus): string {
-  switch (status) {
-    case "strong": return "bg-emerald-500";
-    case "researching":
-    case "evidence_gathering": return "bg-amber-500";
-    case "weak": return "bg-red-500";
-    case "not_applicable": return "bg-zinc-600";
-    default: return "bg-zinc-700";
-  }
-}
+const STATUS_LABEL: Record<CriterionStatus, string> = {
+  not_started: "Not started",
+  researching: "Researching",
+  evidence_gathering: "Evidence",
+  strong: "Strong",
+  weak: "Weak",
+  not_applicable: "N/A",
+};
 
-function StrengthDots({ score }: { score: number }) {
-  return (
-    <div className="flex gap-1.5">
-      {[1, 2, 3, 4, 5].map((val) => (
-        <div
-          key={val}
-          className={cn(
-            "w-4 h-4 rounded-full",
-            val <= score
-              ? "bg-indigo-500"
-              : "bg-zinc-700"
-          )}
-        />
-      ))}
-    </div>
-  );
-}
+const STATUS_TONE: Record<CriterionStatus, string> = {
+  not_started: "text-zinc-500 bg-zinc-500/10 ring-zinc-500/20",
+  researching: "text-sky-300 bg-sky-400/10 ring-sky-400/20",
+  evidence_gathering: "text-amber-300 bg-amber-400/10 ring-amber-400/20",
+  strong: "text-emerald-300 bg-emerald-400/10 ring-emerald-400/20",
+  weak: "text-rose-300 bg-rose-400/10 ring-rose-400/20",
+  not_applicable: "text-zinc-600 bg-zinc-500/5 ring-zinc-500/10",
+};
 
 export default function CriteriaPage() {
   const { data, loading } = useData<CriteriaData>("criteria");
@@ -69,153 +59,201 @@ export default function CriteriaPage() {
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
       </div>
     );
   }
 
-  const meetingCount = data.filter(
+  const meeting = data.filter(
     (c) => c.status === "strong" && c.strengthScore >= 4
   ).length;
 
-  // Count evidence items per criterion
   const evidenceCountByCriterion: Record<number, number> = {};
   if (evidence) {
     for (const e of evidence) {
-      evidenceCountByCriterion[e.criterionId] = (evidenceCountByCriterion[e.criterionId] || 0) + 1;
+      evidenceCountByCriterion[e.criterionId] =
+        (evidenceCountByCriterion[e.criterionId] || 0) + 1;
     }
   }
 
-  // Split into targeted and non-targeted, sorted appropriately
   const targeted = data
     .filter((c) => c.targeted)
-    .sort((a, b) => b.strengthScore - a.strengthScore);
-  const nonTargeted = data.filter((c) => !c.targeted);
-
-  const renderCard = (criterion: CriteriaData[number], isTargeted: boolean) => {
-    const meta = EB1A_CRITERIA.find((c) => c.id === criterion.id) ?? {
-      title: `Criterion ${criterion.id}`,
-      description: criterion.shortDescription,
-    };
-    const evidenceCount = evidenceCountByCriterion[criterion.id] || 0;
-
-    const cardContent = (
-      <div
-        className={cn(
-          "bg-zinc-800/60 border rounded-xl border-l-4 p-5 space-y-3 transition-colors",
-          isTargeted
-            ? cn("border-l-indigo-500 border-indigo-500/30 hover:border-indigo-500/50", borderColor(criterion.status).replace("border-l-", "").length ? "" : "")
-            : cn("border-zinc-700 opacity-60", borderColor(criterion.status)),
-          isTargeted ? "border-l-indigo-500" : borderColor(criterion.status)
-        )}
-      >
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className={cn("font-semibold text-base", isTargeted ? "text-white" : "text-zinc-400")}>
-                <span className="text-zinc-500 mr-1.5">{criterion.id}.</span>
-                {meta.title}
-              </h3>
-              {isTargeted && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 uppercase tracking-wide">
-                  Targeted
-                </span>
-              )}
-            </div>
-            <p className={cn("text-sm mt-1 leading-relaxed", isTargeted ? "text-zinc-400" : "text-zinc-500")}>{meta.description}</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {evidenceCount > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-500/15 text-indigo-300">
-                {evidenceCount} evidence
-              </span>
-            )}
-            {isTargeted && (
-              <ChevronRight size={16} className="text-zinc-500" />
-            )}
-          </div>
-        </div>
-
-        {/* Status and strength */}
-        <div className="flex flex-wrap items-center gap-4">
-          <StatusBadge status={criterion.status} />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">Strength</span>
-            <StrengthDots score={criterion.strengthScore} />
-          </div>
-        </div>
-
-        {/* Notes */}
-        {criterion.notes && (
-          <p className="text-sm text-zinc-400 leading-relaxed">{criterion.notes}</p>
-        )}
-      </div>
-    );
-
-    if (isTargeted) {
-      return (
-        <Link key={criterion.id} href={`/criteria/${criterion.id}`} className="block">
-          {cardContent}
-        </Link>
-      );
-    }
-
-    return <div key={criterion.id}>{cardContent}</div>;
-  };
+    .sort((a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]);
+  const nonTargeted = data
+    .filter((c) => !c.targeted)
+    .sort((a, b) => a.id - b.id);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">EB-1A Criteria</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Meeting <span className="text-white font-semibold">{meetingCount}</span> of 10 criteria{" "}
-          <span className="text-zinc-500">(need 3+)</span>
-        </p>
-      </div>
-
-      {/* Segmented progress bar */}
-      <div className="flex gap-1 h-2.5 rounded-full overflow-hidden bg-zinc-800">
-        {data.map((c) => (
-          <div
-            key={c.id}
-            className={cn(
-              "flex-1 transition-colors duration-300 first:rounded-l-full last:rounded-r-full",
-              segmentColor(c.status)
-            )}
-          />
-        ))}
+    <div className="max-w-5xl mx-auto">
+      <div className="border-b border-zinc-800 pb-6 mb-6">
+        <h1 className="text-2xl font-semibold text-white tracking-tight">
+          EB-1A criteria
+        </h1>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
+          <span>
+            <span className="font-medium text-zinc-200">{meeting}</span>{" "}
+            <span className="text-zinc-500">of 10 strong</span>
+          </span>
+          <span>
+            <span className="font-medium text-zinc-200">{targeted.length}</span>{" "}
+            <span className="text-zinc-500">targeted</span>
+          </span>
+          <span className="text-zinc-600">need 3+</span>
+        </div>
       </div>
 
       {data.length === 0 ? (
-        <EmptyState title="No criteria data" description="Criteria information is not available yet." />
+        <EmptyState
+          title="No criteria data"
+          description="Criteria information is not available yet."
+        />
       ) : (
         <>
-          {/* Targeted criteria */}
           {targeted.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-sm font-semibold text-indigo-400 uppercase tracking-wider">
-                Targeted Criteria ({targeted.length})
-              </h2>
-              <div className="grid grid-cols-1 gap-4">
-                {targeted.map((c) => renderCard(c, true))}
-              </div>
-            </div>
+            <Section label="Targeted" count={targeted.length}>
+              <ul className="divide-y divide-zinc-800/70">
+                {targeted.map((c) => (
+                  <CriterionRow
+                    key={c.id}
+                    criterion={c}
+                    evidenceCount={evidenceCountByCriterion[c.id] || 0}
+                    targeted
+                  />
+                ))}
+              </ul>
+            </Section>
           )}
-
-          {/* Non-targeted criteria */}
           {nonTargeted.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">
-                Other Criteria ({nonTargeted.length})
-              </h2>
-              <div className="grid grid-cols-1 gap-4">
-                {nonTargeted.map((c) => renderCard(c, false))}
-              </div>
-            </div>
+            <Section label="Other criteria" count={nonTargeted.length}>
+              <ul className="divide-y divide-zinc-800/70">
+                {nonTargeted.map((c) => (
+                  <CriterionRow
+                    key={c.id}
+                    criterion={c}
+                    evidenceCount={evidenceCountByCriterion[c.id] || 0}
+                    targeted={false}
+                  />
+                ))}
+              </ul>
+            </Section>
           )}
         </>
       )}
     </div>
   );
+}
+
+function Section({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mb-8 last:mb-0">
+      <div className="sticky top-0 z-10 bg-zinc-950/90 backdrop-blur-sm flex items-baseline justify-between border-b border-zinc-800/70 py-2 mb-1">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+          {label}
+        </h2>
+        <span className="text-[11px] tabular-nums text-zinc-600">{count}</span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CriterionRow({
+  criterion: c,
+  evidenceCount,
+  targeted,
+}: {
+  criterion: CriterionEntry;
+  evidenceCount: number;
+  targeted: boolean;
+}) {
+  const dotTone =
+    c.strengthScore >= 4
+      ? "bg-emerald-400"
+      : c.strengthScore >= 2
+      ? "bg-amber-400"
+      : c.strengthScore > 0
+      ? "bg-rose-400"
+      : "bg-zinc-700";
+  const title = CRITERIA_TITLES[c.id] || c.title;
+  const inner = (
+    <div
+      className={cn(
+        "group flex items-center gap-3 py-2.5 pl-3 pr-2 text-sm",
+        targeted ? "hover:bg-zinc-900/60 transition-colors" : "opacity-60"
+      )}
+    >
+      <span className="text-[11px] tabular-nums text-zinc-600 w-6 shrink-0">
+        C{c.id}
+      </span>
+      <span
+        className={cn(
+          "flex-1 min-w-0 truncate",
+          targeted ? "text-zinc-100 group-hover:text-white" : "text-zinc-400"
+        )}
+      >
+        {title}
+      </span>
+
+      {/* strength dots */}
+      <span
+        className="hidden sm:flex items-center gap-1 shrink-0"
+        aria-label={`Strength ${c.strengthScore} of 5`}
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span
+            key={i}
+            className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              i < c.strengthScore ? dotTone : "bg-zinc-700"
+            )}
+          />
+        ))}
+        <span className="ml-1.5 text-[11px] tabular-nums text-zinc-500 w-8 text-right">
+          {c.strengthScore}/5
+        </span>
+      </span>
+
+      {/* evidence count */}
+      <span className="hidden md:inline text-[11px] tabular-nums text-zinc-500 w-20 text-right">
+        {evidenceCount} evidence
+      </span>
+
+      {/* status pill */}
+      <span
+        className={cn(
+          "shrink-0 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded ring-1 w-24 text-center",
+          STATUS_TONE[c.status]
+        )}
+      >
+        {STATUS_LABEL[c.status]}
+      </span>
+
+      <span
+        className={cn(
+          "text-sm",
+          targeted
+            ? "text-zinc-700 group-hover:text-indigo-400 transition-colors"
+            : "text-transparent"
+        )}
+      >
+        ›
+      </span>
+    </div>
+  );
+  if (targeted) {
+    return (
+      <li>
+        <Link href={`/criteria/${c.id}`}>{inner}</Link>
+      </li>
+    );
+  }
+  return <li>{inner}</li>;
 }

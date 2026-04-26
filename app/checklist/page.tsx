@@ -3,168 +3,163 @@
 import { useState } from "react";
 import { useData } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
-import ProgressBar from "@/components/ui/ProgressBar";
 import EmptyState from "@/components/ui/EmptyState";
 import ProgressSubNav from "@/components/layout/ProgressSubNav";
-import type { ChecklistData } from "@/lib/types";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import type { ChecklistData, ChecklistSection } from "@/lib/types";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 
 export default function ChecklistPage() {
   const { data: checklist, loading } = useData<ChecklistData>("checklist");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   if (loading || !checklist) {
-    return <ChecklistSkeleton />;
+    return (
+      <>
+        <ProgressSubNav />
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
+        </div>
+      </>
+    );
   }
 
-  const totalItems = checklist.reduce((acc, s) => acc + s.items.length, 0);
-  const checkedItems = checklist.reduce(
+  const total = checklist.reduce((acc, s) => acc + s.items.length, 0);
+  const checked = checklist.reduce(
     (acc, s) => acc + s.items.filter((i) => i.checked).length,
     0
   );
+  const completedSections = checklist.filter(
+    (s) => s.items.length > 0 && s.items.every((i) => i.checked)
+  ).length;
 
-  function toggleCollapse(sectionId: string) {
-    setCollapsed((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  function toggle(id: string) {
+    setCollapsed((p) => ({ ...p, [id]: !p[id] }));
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl mx-auto">
       <ProgressSubNav />
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Master Checklist</h1>
-        <p className="text-zinc-400 mt-1">
-          Track all required items for your EB-1A petition
-        </p>
+      <div className="border-b border-zinc-800 pb-6 mb-6">
+        <h1 className="text-2xl font-semibold text-white tracking-tight">
+          Master checklist
+        </h1>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
+          <span>
+            <span className="font-medium text-zinc-200">{checked}</span>{" "}
+            <span className="text-zinc-500">of {total} items</span>
+          </span>
+          <span>
+            <span className="font-medium text-emerald-300">{completedSections}</span>{" "}
+            <span className="text-zinc-500">of {checklist.length} sections complete</span>
+          </span>
+        </div>
+        <div className="mt-4 h-1 w-full bg-zinc-800/70 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-400 rounded-full transition-all"
+            style={{ width: `${total > 0 ? Math.max(2, (checked / total) * 100) : 0}%` }}
+          />
+        </div>
       </div>
 
       {checklist.length === 0 ? (
         <EmptyState
           title="No checklist items yet"
-          description="Your checklist sections will appear here once configured."
+          description="Sections will appear here once your data repo has them."
         />
       ) : (
-        <>
-          {/* Overall Progress */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-                Overall Completion
-              </h2>
-              <span className="text-sm text-zinc-300">
-                <span className="text-white font-bold">{checkedItems}</span>{" "}
-                <span className="text-zinc-500">of {totalItems} items completed</span>
-              </span>
-            </div>
-            <ProgressBar value={checkedItems} max={totalItems} color="bg-indigo-500" className="h-3" />
-          </div>
-
-          {/* Section Cards */}
-          <div className="space-y-4">
-            {checklist.map((section) => {
-              const sectionChecked = section.items.filter((i) => i.checked).length;
-              const sectionTotal = section.items.length;
-              const isCollapsed = collapsed[section.id] ?? false;
-
-              return (
-                <div
-                  key={section.id}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden"
-                >
-                  {/* Section Header — collapse toggle */}
-                  <button
-                    onClick={() => toggleCollapse(section.id)}
-                    className="w-full flex items-center gap-3 p-5 text-left hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <span className="text-xl shrink-0">{section.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <h3 className="text-white font-semibold truncate">
-                          {section.title}
-                        </h3>
-                        <span className="text-xs text-zinc-400 shrink-0 ml-3">
-                          {sectionChecked} of {sectionTotal}
-                        </span>
-                      </div>
-                      <ProgressBar
-                        value={sectionChecked}
-                        max={sectionTotal}
-                        color={
-                          sectionChecked === sectionTotal && sectionTotal > 0
-                            ? "bg-emerald-500"
-                            : "bg-indigo-500"
-                        }
-                      />
-                    </div>
-                    <span className="text-zinc-500 shrink-0 ml-2">
-                      {isCollapsed ? (
-                        <ChevronRight size={18} />
-                      ) : (
-                        <ChevronDown size={18} />
-                      )}
-                    </span>
-                  </button>
-
-                  {/* Section Items */}
-                  {!isCollapsed && (
-                    <div className="border-t border-zinc-800">
-                      <div className="divide-y divide-zinc-800/50">
-                        {section.items.map((item) => (
-                          <div key={item.id} className="px-5 py-3">
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={cn(
-                                  "text-lg shrink-0 leading-none",
-                                  item.checked ? "text-emerald-400" : "text-zinc-600"
-                                )}
-                              >
-                                {item.checked ? "✓" : "○"}
-                              </span>
-                              <span
-                                className={cn(
-                                  "flex-1 text-sm",
-                                  item.checked
-                                    ? "text-zinc-500 line-through"
-                                    : "text-zinc-300"
-                                )}
-                              >
-                                {item.label}
-                              </span>
-                            </div>
-                            {item.notes && (
-                              <p className="text-xs text-zinc-500 italic mt-1 ml-9">
-                                {item.notes}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
+        <div>
+          {checklist.map((section) => (
+            <SectionBlock
+              key={section.id}
+              section={section}
+              isCollapsed={collapsed[section.id] ?? false}
+              onToggle={() => toggle(section.id)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function ChecklistSkeleton() {
+function SectionBlock({
+  section,
+  isCollapsed,
+  onToggle,
+}: {
+  section: ChecklistSection;
+  isCollapsed: boolean;
+  onToggle: () => void;
+}) {
+  const done = section.items.filter((i) => i.checked).length;
+  const totalItems = section.items.length;
+  const isComplete = done === totalItems && totalItems > 0;
+
   return (
-    <div className="space-y-8 animate-pulse">
-      <div>
-        <div className="h-8 bg-zinc-800 rounded w-56" />
-        <div className="h-4 bg-zinc-800 rounded w-72 mt-2" />
-      </div>
-      <div className="h-20 bg-zinc-900 border border-zinc-800 rounded-xl" />
-      <div className="space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-48 bg-zinc-900 border border-zinc-800 rounded-xl" />
-        ))}
-      </div>
-    </div>
+    <section className="mb-6 last:mb-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full sticky top-0 z-10 bg-zinc-950/90 backdrop-blur-sm flex items-baseline justify-between border-b border-zinc-800/70 py-2 mb-1 hover:bg-zinc-900/40 transition-colors"
+      >
+        <span className="flex items-baseline gap-2 min-w-0">
+          {isCollapsed ? (
+            <ChevronRight size={12} className="text-zinc-600 self-center" />
+          ) : (
+            <ChevronDown size={12} className="text-zinc-600 self-center" />
+          )}
+          {section.icon && (
+            <span className="text-zinc-500 text-xs">{section.icon}</span>
+          )}
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-500 truncate">
+            {section.title}
+          </h2>
+        </span>
+        <span
+          className={cn(
+            "text-[11px] tabular-nums shrink-0 ml-3",
+            isComplete ? "text-emerald-300" : "text-zinc-600"
+          )}
+        >
+          {done}/{totalItems}
+        </span>
+      </button>
+
+      {!isCollapsed && (
+        <ul className="divide-y divide-zinc-800/70">
+          {section.items.map((item) => (
+            <li key={item.id}>
+              <div className="flex items-start gap-3 py-2 pl-3 pr-2 text-sm">
+                <span
+                  className={cn(
+                    "mt-0.5 inline-block w-3 h-3 rounded-full ring-1 shrink-0",
+                    item.checked
+                      ? "bg-emerald-400/80 ring-emerald-400/30"
+                      : "bg-transparent ring-zinc-600"
+                  )}
+                  aria-hidden="true"
+                />
+                <span
+                  className={cn(
+                    "flex-1 min-w-0",
+                    item.checked
+                      ? "text-zinc-500 line-through"
+                      : "text-zinc-200"
+                  )}
+                >
+                  {item.label}
+                  {item.notes && (
+                    <span className="block text-[11px] italic text-zinc-600 mt-0.5">
+                      {item.notes}
+                    </span>
+                  )}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
