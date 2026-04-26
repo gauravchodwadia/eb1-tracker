@@ -18,7 +18,7 @@ import type {
   ReviewerRelevance,
   ReviewerStatus,
 } from "@/lib/types";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -379,6 +379,7 @@ function EvidenceSection({
   loading: boolean;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState(false);
 
   const grouped = useMemo(() => {
     const out: Record<EvidenceStatus, EvidenceItem[]> = {
@@ -421,6 +422,8 @@ function EvidenceSection({
     <section className="mt-6">
       <SectionHeader
         label="Evidence"
+        isCollapsed={collapsed}
+        onToggle={() => setCollapsed((c) => !c)}
         meta={
           <span className="flex items-baseline gap-3 tabular-nums">
             <span className="text-zinc-500">
@@ -437,7 +440,7 @@ function EvidenceSection({
           </span>
         }
       />
-      {loading ? (
+      {collapsed ? null : loading ? (
         <div className="flex items-center justify-center h-24">
           <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
         </div>
@@ -496,7 +499,6 @@ function EvidenceRow({
     : days !== null && days <= 14
     ? "text-amber-300"
     : "text-zinc-500";
-  const hasDetails = !!e.description || !!e.fileNote || !!e.completedAt;
 
   return (
     <li
@@ -509,11 +511,8 @@ function EvidenceRow({
       <button
         type="button"
         onClick={onToggle}
-        disabled={!hasDetails}
         className={cn(
-          "group w-full text-left flex items-center gap-3 py-2 pl-3 pr-2 text-sm transition-colors",
-          hasDetails && "hover:bg-zinc-900/60 cursor-pointer",
-          !hasDetails && "cursor-default",
+          "group w-full text-left flex items-center gap-3 py-2 pl-3 pr-2 text-sm transition-colors hover:bg-zinc-900/60 cursor-pointer",
           isOverdue && "pl-4"
         )}
       >
@@ -537,23 +536,27 @@ function EvidenceRow({
           {EVIDENCE_LABEL[e.status]}
         </span>
         <span
-          className={cn(
-            "w-3 text-zinc-700 text-xs",
-            hasDetails && "group-hover:text-zinc-500"
-          )}
+          className="w-3 text-zinc-700 group-hover:text-zinc-500 text-xs"
           aria-hidden="true"
         >
-          {hasDetails ? (isExpanded ? "−" : "+") : ""}
+          {isExpanded ? "−" : "+"}
         </span>
       </button>
-      {isExpanded && hasDetails && (
+      {isExpanded && (
         <div className="pl-3 pr-12 pb-3 -mt-1 text-xs text-zinc-400 space-y-1.5">
+          {/* Surface due date on screens where the row hides it */}
+          {dueText && (
+            <p className={cn("md:hidden tabular-nums", dueCls)}>{dueText}</p>
+          )}
           {e.description && <p className="leading-relaxed">{e.description}</p>}
           {(e.fileNote || e.completedAt) && (
             <p className="flex flex-wrap gap-x-4 gap-y-1 text-zinc-500">
               {e.completedAt && <span>Completed {fmtDate(e.completedAt)}</span>}
               {e.fileNote && <span>{e.fileNote}</span>}
             </p>
+          )}
+          {!dueText && !e.description && !e.fileNote && !e.completedAt && (
+            <p className="text-zinc-600 italic">No additional details.</p>
           )}
         </div>
       )}
@@ -571,6 +574,7 @@ function VenueBucketSection({
   rows: ReviewerApplication[];
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState(false);
 
   const grouped = useMemo(() => {
     const out: Record<ReviewerGroupKey, ReviewerApplication[]> = {
@@ -625,6 +629,8 @@ function VenueBucketSection({
     <section className="mt-10">
       <SectionHeader
         label={bucket.label}
+        isCollapsed={collapsed}
+        onToggle={() => setCollapsed((c) => !c)}
         meta={
           <span className="flex items-baseline gap-3 tabular-nums">
             <span className="text-zinc-500">
@@ -649,10 +655,12 @@ function VenueBucketSection({
           </span>
         }
       />
-      {bucket.description && (
-        <p className="text-xs text-zinc-500 -mt-1 mb-3">{bucket.description}</p>
-      )}
-      {rows.length === 0 ? (
+      {collapsed ? null : (
+        <>
+          {bucket.description && (
+            <p className="text-xs text-zinc-500 -mt-1 mb-3">{bucket.description}</p>
+          )}
+          {rows.length === 0 ? (
         <div className="py-6">
           <EmptyState title={`No ${bucket.label.toLowerCase()} yet`} description={bucket.emptyHint} />
         </div>
@@ -677,6 +685,8 @@ function VenueBucketSection({
             );
           })}
         </div>
+      )}
+        </>
       )}
     </section>
   );
@@ -713,9 +723,6 @@ function ReviewerRow({
     : r.followUpDate && days !== null && days <= 14
     ? "text-amber-300"
     : "text-zinc-500";
-  const hasDetails =
-    !!r.eb1aValue || !!r.notes || !!r.contactInfo ||
-    !!r.formalTitle || !!r.location;
 
   return (
     <li
@@ -728,11 +735,8 @@ function ReviewerRow({
       <button
         type="button"
         onClick={onToggle}
-        disabled={!hasDetails}
         className={cn(
-          "group w-full text-left flex items-center gap-3 py-2 pl-3 pr-2 text-sm transition-colors",
-          hasDetails && "hover:bg-zinc-900/60 cursor-pointer",
-          !hasDetails && "cursor-default",
+          "group w-full text-left flex items-center gap-3 py-2 pl-3 pr-2 text-sm transition-colors hover:bg-zinc-900/60 cursor-pointer",
           isOverdue && "pl-4"
         )}
       >
@@ -786,17 +790,29 @@ function ReviewerRow({
           <span className="w-[26px]" />
         )}
         <span
-          className={cn(
-            "w-3 text-zinc-700 text-xs",
-            hasDetails && "group-hover:text-zinc-500"
-          )}
+          className="w-3 text-zinc-700 group-hover:text-zinc-500 text-xs"
           aria-hidden="true"
         >
-          {hasDetails ? (isExpanded ? "−" : "+") : ""}
+          {isExpanded ? "−" : "+"}
         </span>
       </button>
-      {isExpanded && hasDetails && (
+      {isExpanded && (
         <div className="pl-3 pr-12 pb-3 -mt-1 text-xs text-zinc-400 space-y-1.5">
+          {/* Mobile-only: priority + date that the row hides at narrow breakpoints */}
+          <p className="flex flex-wrap gap-x-4 gap-y-1 sm:hidden">
+            <span className={RELEVANCE_TONE[r.relevance]}>
+              {RELEVANCE_LABEL[r.relevance]}
+            </span>
+            {dateText && (
+              <span className={cn("tabular-nums", dateCls)}>{dateText}</span>
+            )}
+          </p>
+          {/* sm-only: just the date (relevance is already visible at sm+) */}
+          {dateText && (
+            <p className={cn("hidden sm:block md:hidden tabular-nums", dateCls)}>
+              {dateText}
+            </p>
+          )}
           {r.eb1aValue && <p className="text-zinc-300 leading-relaxed">{r.eb1aValue}</p>}
           {(r.location || r.contactInfo || r.formalTitle) && (
             <p className="flex flex-wrap gap-x-4 gap-y-1 text-zinc-500">
@@ -819,16 +835,46 @@ function ReviewerRow({
 function SectionHeader({
   label,
   meta,
+  isCollapsed,
+  onToggle,
 }: {
   label: string;
   meta?: React.ReactNode;
+  isCollapsed?: boolean;
+  onToggle?: () => void;
 }) {
+  const Chevron = isCollapsed ? ChevronRight : ChevronDown;
+  const inner = (
+    <>
+      <span className="flex items-baseline gap-2">
+        {onToggle && (
+          <Chevron
+            size={11}
+            className="text-zinc-600 group-hover:text-zinc-400 transition-colors self-center"
+          />
+        )}
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-400">
+          {label}
+        </h2>
+      </span>
+      {meta && <div className="text-[11px] text-zinc-500">{meta}</div>}
+    </>
+  );
+  if (onToggle) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        className="group w-full flex items-baseline justify-between border-b border-zinc-800/70 py-2 mb-2 hover:bg-zinc-900/40 -mx-3 px-3 transition-colors"
+        aria-expanded={!isCollapsed}
+      >
+        {inner}
+      </button>
+    );
+  }
   return (
     <div className="flex items-baseline justify-between border-b border-zinc-800/70 py-2 mb-2">
-      <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-400">
-        {label}
-      </h2>
-      {meta && <div className="text-[11px] text-zinc-500">{meta}</div>}
+      {inner}
     </div>
   );
 }
