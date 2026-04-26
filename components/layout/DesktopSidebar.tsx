@@ -11,6 +11,7 @@ import {
   Target,
   FileText,
   Mail,
+  GraduationCap,
   CheckSquare,
   Clock,
   DollarSign,
@@ -59,6 +60,7 @@ const NAV_ITEMS_TOP = [
 const NAV_ITEMS_MIDDLE = [
   { href: "/evidence", label: "Evidence", icon: FileText },
   { href: "/letters", label: "Letters", icon: Mail },
+  { href: "/reviewers", label: "Reviewers", icon: GraduationCap },
 ];
 
 const NAV_ITEMS_BOTTOM = [
