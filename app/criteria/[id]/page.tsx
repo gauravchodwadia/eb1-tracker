@@ -4,456 +4,174 @@ import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useData } from "@/lib/hooks";
-import { formatDate, cn } from "@/lib/utils";
-import StatusBadge from "@/components/ui/StatusBadge";
-import ProgressBar from "@/components/ui/ProgressBar";
+import { cn } from "@/lib/utils";
 import EmptyState from "@/components/ui/EmptyState";
 import type {
   CriteriaData,
-  EvidenceData,
-  ReviewersData,
-  ReviewerStatus,
-  ReviewerRelevance,
+  CriterionEntry,
   CriterionStatus,
+  EvidenceData,
+  EvidenceItem,
+  EvidenceStatus,
+  ReviewersData,
+  ReviewerApplication,
+  ReviewerRelevance,
+  ReviewerStatus,
 } from "@/lib/types";
-import {
-  Loader2,
-  ArrowLeft,
-  ExternalLink,
-  Calendar,
-  MapPin,
-  Bell,
-  FileCheck,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const CRITERION_LABELS: Record<number, string> = {
   1: "Awards",
   2: "Memberships",
-  3: "Published Material / Media",
+  3: "Published material",
   4: "Judging",
-  5: "Original Contributions",
-  6: "Scholarly Articles / Publications",
+  5: "Original contributions",
+  6: "Scholarly articles",
   7: "Exhibitions",
-  8: "Leading / Critical Role",
-  9: "High Salary",
-  10: "Commercial Success / Performing Arts",
+  8: "Leading or critical role",
+  9: "High salary",
+  10: "Commercial success",
 };
 
-function StrengthDots({ score }: { score: number }) {
-  return (
-    <div className="flex gap-1.5">
-      {[1, 2, 3, 4, 5].map((val) => (
-        <div
-          key={val}
-          className={cn(
-            "w-4 h-4 rounded-full",
-            val <= score ? "bg-indigo-500" : "bg-zinc-700"
-          )}
-        />
-      ))}
-    </div>
-  );
-}
+const STATUS_LABEL: Record<CriterionStatus, string> = {
+  not_started: "Not started",
+  researching: "Researching",
+  evidence_gathering: "Evidence",
+  strong: "Strong",
+  weak: "Weak",
+  not_applicable: "N/A",
+};
 
-function evidenceStatusColor(status: string): string {
-  switch (status) {
-    case "final":
-      return "border-emerald-500/30 bg-emerald-500/5";
-    case "reviewed":
-      return "border-blue-500/30 bg-blue-500/5";
-    case "received":
-      return "border-amber-500/30 bg-amber-500/5";
-    case "requested":
-      return "border-orange-500/30 bg-orange-500/5";
-    case "needed":
-    default:
-      return "border-zinc-700/50 bg-zinc-800/30";
-  }
-}
+const STATUS_TONE: Record<CriterionStatus, string> = {
+  not_started: "text-zinc-500 bg-zinc-500/10 ring-zinc-500/20",
+  researching: "text-sky-300 bg-sky-400/10 ring-sky-400/20",
+  evidence_gathering: "text-amber-300 bg-amber-400/10 ring-amber-400/20",
+  strong: "text-emerald-300 bg-emerald-400/10 ring-emerald-400/20",
+  weak: "text-rose-300 bg-rose-400/10 ring-rose-400/20",
+  not_applicable: "text-zinc-600 bg-zinc-500/5 ring-zinc-500/10",
+};
 
-// ===== Reviewer tracker constants (for Criterion 4) =====
-
-const STATUS_STAGES: { key: ReviewerStatus; label: string; color: string }[] = [
-  { key: "enrolled", label: "Enrolled", color: "bg-emerald-500" },
-  { key: "accepted", label: "Accepted", color: "bg-green-500" },
-  { key: "applied", label: "Applied", color: "bg-blue-500" },
-  { key: "in_progress", label: "In Progress", color: "bg-amber-500" },
-  { key: "to_apply", label: "To Apply", color: "bg-orange-500" },
-  { key: "watch", label: "Watch", color: "bg-purple-500" },
-  { key: "via_arr", label: "Via ARR", color: "bg-cyan-500" },
-  { key: "closed", label: "Closed", color: "bg-zinc-500" },
-  { key: "rejected", label: "Rejected", color: "bg-red-500" },
+const EVIDENCE_GROUPS: { key: EvidenceStatus; label: string }[] = [
+  { key: "final", label: "Final" },
+  { key: "reviewed", label: "Reviewed" },
+  { key: "received", label: "Received" },
+  { key: "requested", label: "Requested" },
+  { key: "needed", label: "Needed" },
 ];
 
-const RELEVANCE_LABELS: Record<ReviewerRelevance, string> = {
+const EVIDENCE_TONE: Record<EvidenceStatus, string> = {
+  final: "text-emerald-300 bg-emerald-400/10 ring-emerald-400/20",
+  reviewed: "text-sky-300 bg-sky-400/10 ring-sky-400/20",
+  received: "text-violet-300 bg-violet-400/10 ring-violet-400/20",
+  requested: "text-amber-300 bg-amber-400/10 ring-amber-400/20",
+  needed: "text-rose-300 bg-rose-400/10 ring-rose-400/20",
+};
+
+const EVIDENCE_LABEL: Record<EvidenceStatus, string> = {
+  final: "Final",
+  reviewed: "Reviewed",
+  received: "Received",
+  requested: "Requested",
+  needed: "Needed",
+};
+
+type ReviewerGroupKey = "active" | "in_flight" | "todo" | "watch" | "closed";
+
+const REVIEWER_GROUPS: {
+  key: ReviewerGroupKey;
+  label: string;
+  statuses: ReviewerStatus[];
+}[] = [
+  { key: "active", label: "Accepted & enrolled", statuses: ["enrolled", "accepted"] },
+  { key: "in_flight", label: "In flight", statuses: ["applied", "in_progress", "via_arr"] },
+  { key: "todo", label: "To apply", statuses: ["to_apply"] },
+  { key: "watch", label: "Watching", statuses: ["watch"] },
+  { key: "closed", label: "Closed", statuses: ["closed", "rejected"] },
+];
+
+const REVIEWER_STATUS_LABEL: Record<ReviewerStatus, string> = {
+  enrolled: "Enrolled",
+  accepted: "Accepted",
+  applied: "Applied",
+  in_progress: "In progress",
+  to_apply: "To apply",
+  watch: "Watching",
+  via_arr: "Via ARR",
+  closed: "Closed",
+  rejected: "Rejected",
+};
+
+const REVIEWER_STATUS_TONE: Record<ReviewerStatus, string> = {
+  enrolled: "text-emerald-300 bg-emerald-400/10 ring-emerald-400/20",
+  accepted: "text-emerald-300 bg-emerald-400/10 ring-emerald-400/20",
+  applied: "text-sky-300 bg-sky-400/10 ring-sky-400/20",
+  in_progress: "text-amber-300 bg-amber-400/10 ring-amber-400/20",
+  to_apply: "text-orange-300 bg-orange-400/10 ring-orange-400/20",
+  watch: "text-violet-300 bg-violet-400/10 ring-violet-400/20",
+  via_arr: "text-cyan-300 bg-cyan-400/10 ring-cyan-400/20",
+  closed: "text-zinc-500 bg-zinc-500/10 ring-zinc-500/20",
+  rejected: "text-rose-300 bg-rose-400/10 ring-rose-400/20",
+};
+
+const RELEVANCE_LABEL: Record<ReviewerRelevance, string> = {
   highest: "Highest",
   high: "High",
-  medium_high: "Med-High",
+  medium_high: "Med-high",
   medium: "Medium",
   low: "Low",
 };
 
-const RELEVANCE_COLORS: Record<ReviewerRelevance, string> = {
-  highest: "text-red-400 bg-red-400/10",
-  high: "text-orange-400 bg-orange-400/10",
-  medium_high: "text-amber-400 bg-amber-400/10",
-  medium: "text-zinc-400 bg-zinc-400/10",
-  low: "text-zinc-500 bg-zinc-500/10",
+const RELEVANCE_RANK: Record<ReviewerRelevance, number> = {
+  highest: 0,
+  high: 1,
+  medium_high: 2,
+  medium: 3,
+  low: 4,
 };
 
-const RELEVANCE_ORDER: ReviewerRelevance[] = [
-  "highest",
-  "high",
-  "medium_high",
-  "medium",
-  "low",
-];
+const RELEVANCE_TONE: Record<ReviewerRelevance, string> = {
+  highest: "text-rose-300",
+  high: "text-orange-300",
+  medium_high: "text-amber-300",
+  medium: "text-zinc-400",
+  low: "text-zinc-600",
+};
 
-function reviewerStatusColor(status: ReviewerStatus): string {
-  switch (status) {
-    case "enrolled":
-    case "accepted":
-      return "text-emerald-400 bg-emerald-400/10";
-    case "applied":
-      return "text-blue-400 bg-blue-400/10";
-    case "in_progress":
-      return "text-amber-400 bg-amber-400/10";
-    case "to_apply":
-      return "text-orange-400 bg-orange-400/10";
-    case "watch":
-      return "text-purple-400 bg-purple-400/10";
-    case "via_arr":
-      return "text-cyan-400 bg-cyan-400/10";
-    case "closed":
-      return "text-zinc-500 bg-zinc-500/10";
-    case "rejected":
-      return "text-red-400 bg-red-400/10";
-    default:
-      return "text-zinc-400 bg-zinc-400/10";
-  }
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDate(s: string | null): string {
+  if (!s) return "";
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// ===== Reviewer Tracker Section (Criterion 4) =====
-
-function ReviewerTracker() {
-  const { data, loading } = useData<ReviewersData>("reviewers");
-  const [filterStatus, setFilterStatus] = useState<ReviewerStatus | "all">("all");
-  const [showActionQueue, setShowActionQueue] = useState(true);
-
-  const statusCounts = useMemo(() => {
-    if (!data) return {};
-    const counts: Partial<Record<ReviewerStatus, number>> = {};
-    data.forEach((r) => {
-      counts[r.status] = (counts[r.status] || 0) + 1;
-    });
-    return counts;
-  }, [data]);
-
-  const actionItems = useMemo(() => {
-    if (!data) return [];
-    const now = new Date();
-    return data
-      .filter((r) => {
-        if (r.followUpDate) {
-          const d = new Date(r.followUpDate);
-          const daysAway = (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-          return daysAway <= 14;
-        }
-        if (r.status === "to_apply") return true;
-        return false;
-      })
-      .sort((a, b) => {
-        if (a.status === "to_apply" && b.status !== "to_apply") return -1;
-        if (b.status === "to_apply" && a.status !== "to_apply") return 1;
-        if (a.followUpDate && b.followUpDate)
-          return new Date(a.followUpDate).getTime() - new Date(b.followUpDate).getTime();
-        return 0;
-      });
-  }, [data]);
-
-  const filtered = useMemo(() => {
-    if (!data) return [];
-    return data
-      .filter((r) => {
-        if (filterStatus !== "all" && r.status !== filterStatus) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        const relA = RELEVANCE_ORDER.indexOf(a.relevance);
-        const relB = RELEVANCE_ORDER.indexOf(b.relevance);
-        if (relA !== relB) return relA - relB;
-        const statusOrder: ReviewerStatus[] = [
-          "enrolled", "accepted", "in_progress", "applied",
-          "to_apply", "watch", "via_arr", "closed", "rejected",
-        ];
-        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-      });
-  }, [data, filterStatus]);
-
-  if (loading || !data) {
-    return (
-      <div className="flex items-center justify-center h-32">
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
-      </div>
-    );
-  }
-
-  const enrolled = data.filter((r) => r.status === "enrolled" || r.status === "accepted").length;
-  const applied = data.filter((r) => r.status === "applied").length;
-  const lettersObtained = data.filter((r) => r.letterObtained).length;
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-white">Reviewer Application Tracker</h2>
-      <p className="text-zinc-400 text-sm">
-        Conference &amp; journal reviewer applications for EB-1A Criterion 4
-      </p>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{enrolled}</div>
-          <div className="text-xs text-zinc-400">Enrolled</div>
-        </div>
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-blue-400">{applied}</div>
-          <div className="text-xs text-zinc-400">Applied</div>
-        </div>
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-orange-400">{statusCounts["to_apply"] || 0}</div>
-          <div className="text-xs text-zinc-400">To Apply</div>
-        </div>
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-purple-400">{statusCounts["watch"] || 0}</div>
-          <div className="text-xs text-zinc-400">Watching</div>
-        </div>
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-amber-400">{lettersObtained}</div>
-          <div className="text-xs text-zinc-400">Letters Obtained</div>
-        </div>
-      </div>
-
-      {/* Status Pipeline */}
-      <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-zinc-300 mb-3">Status Pipeline</h3>
-        <div className="flex flex-wrap gap-2">
-          {STATUS_STAGES.map((stage) => {
-            const count = statusCounts[stage.key] || 0;
-            const isActive = filterStatus === stage.key;
-            return (
-              <span
-                key={stage.key}
-                role="button"
-                tabIndex={0}
-                onClick={() => setFilterStatus(isActive ? "all" : stage.key)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setFilterStatus(isActive ? "all" : stage.key);
-                  }
-                }}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
-                  isActive
-                    ? "border-indigo-500 bg-indigo-500/20 text-white"
-                    : count > 0
-                    ? "border-zinc-600 bg-zinc-700/50 text-zinc-300 hover:bg-zinc-700"
-                    : "border-zinc-700 bg-zinc-800/50 text-zinc-500"
-                )}
-              >
-                <span className={cn("w-2 h-2 rounded-full", stage.color)} />
-                {stage.label}
-                <span className="text-zinc-400">({count})</span>
-              </span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Action Queue */}
-      {actionItems.length > 0 && (
-        <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg">
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowActionQueue(!showActionQueue)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setShowActionQueue(!showActionQueue);
-              }
-            }}
-            className="w-full flex items-center justify-between p-4 cursor-pointer select-none"
-          >
-            <h3 className="text-sm font-medium text-amber-400 flex items-center gap-2">
-              <Bell size={16} />
-              Action Queue ({actionItems.length} items)
-            </h3>
-            {showActionQueue ? (
-              <ChevronUp size={16} className="text-zinc-400" />
-            ) : (
-              <ChevronDown size={16} className="text-zinc-400" />
-            )}
-          </div>
-          {showActionQueue && (
-            <div className="px-4 pb-4 space-y-2">
-              {actionItems.map((item) => {
-                const isOverdue = item.followUpDate && new Date(item.followUpDate) < new Date();
-                return (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      "p-3 rounded-lg border",
-                      isOverdue
-                        ? "border-red-500/30 bg-red-500/5"
-                        : "border-zinc-700/50 bg-zinc-800/30"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-sm font-medium", isOverdue ? "text-red-400" : "text-zinc-200")}>
-                        {item.venueName}
-                      </span>
-                      <span className={cn("px-2 py-0.5 rounded text-xs font-medium", reviewerStatusColor(item.status))}>
-                        {item.status === "to_apply" ? "TO APPLY" : item.status.replace(/_/g, " ").toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="text-xs text-zinc-400 mt-0.5">
-                      {item.contactInfo}
-                      {item.followUpDate && (
-                        <span className={cn("ml-2", isOverdue ? "text-red-400" : "text-amber-400")}>
-                          {isOverdue ? "OVERDUE: " : "Follow up: "}
-                          {formatDate(item.followUpDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Venue Cards */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          title="No reviewer applications found"
-          description={filterStatus !== "all" ? "Try adjusting your filters." : "No venues have been added yet."}
-        />
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((r) => (
-            <div
-              key={r.id}
-              className={cn(
-                "bg-zinc-800/50 border rounded-xl p-5",
-                r.status === "enrolled" || r.status === "accepted"
-                  ? "border-emerald-500/30"
-                  : r.status === "to_apply"
-                  ? "border-orange-500/20"
-                  : "border-zinc-700/50"
-              )}
-            >
-              <div className="flex items-center flex-wrap gap-2 mb-2">
-                <h3 className="text-white font-medium text-lg">{r.venueName}</h3>
-                <span className={cn("px-2 py-0.5 rounded text-xs font-medium", reviewerStatusColor(r.status))}>
-                  {r.status.replace(/_/g, " ").toUpperCase()}
-                </span>
-                <span className={cn("px-2 py-0.5 rounded text-xs font-medium", RELEVANCE_COLORS[r.relevance])}>
-                  {RELEVANCE_LABELS[r.relevance]}
-                </span>
-                <span className="px-2 py-0.5 rounded text-xs font-medium text-zinc-400 bg-zinc-700/50">
-                  {r.venueType === "artifact_eval" ? "Artifact Eval" : r.venueType}
-                </span>
-                {r.letterObtained && (
-                  <span className="px-2 py-0.5 rounded text-xs font-medium text-emerald-400 bg-emerald-400/10">
-                    <FileCheck size={12} className="inline mr-1" />
-                    Letter
-                  </span>
-                )}
-              </div>
-
-              {r.eb1aValue && <p className="text-sm text-zinc-300 mb-2">{r.eb1aValue}</p>}
-
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400">
-                {r.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={12} />
-                    {r.location}
-                  </span>
-                )}
-                {r.eventDates && (
-                  <span className="flex items-center gap-1">
-                    <Calendar size={12} />
-                    {formatDate(r.eventDates)}
-                  </span>
-                )}
-                {r.contactInfo && <span className="truncate max-w-xs">{r.contactInfo}</span>}
-                {r.formalTitle && <span className="text-indigo-400">Title: {r.formalTitle}</span>}
-                {r.followUpDate && (
-                  <span
-                    className={cn(
-                      "font-medium",
-                      new Date(r.followUpDate) < new Date() ? "text-red-400" : "text-amber-400"
-                    )}
-                  >
-                    <Bell size={12} className="inline mr-1" />
-                    Follow up: {formatDate(r.followUpDate)}
-                  </span>
-                )}
-              </div>
-
-              {(r.openReviewUrl || r.websiteUrl) && (
-                <div className="flex items-center gap-3 mt-2">
-                  {r.openReviewUrl && (
-                    <a
-                      href={r.openReviewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300"
-                    >
-                      <ExternalLink size={12} />
-                      OpenReview
-                    </a>
-                  )}
-                  {r.websiteUrl && (
-                    <a
-                      href={r.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300"
-                    >
-                      <ExternalLink size={12} />
-                      Website
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {r.notes && <p className="text-xs text-zinc-500 mt-2 italic">{r.notes}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+function daysFromNow(s: string | null): number | null {
+  if (!s) return null;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-// ===== Main Page Component =====
+function venueTypeLabel(t: ReviewerApplication["venueType"]): string {
+  return t === "artifact_eval" ? "Artifact" : t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CriterionPage() {
   const params = useParams();
   const criterionId = Number(params.id);
 
   const { data: criteria, loading: criteriaLoading } = useData<CriteriaData>("criteria");
-  const { data: evidence, loading: evidenceLoading } = useData<EvidenceData>("evidence");
+  const { data: evidence } = useData<EvidenceData>("evidence");
 
   if (criteriaLoading || !criteria) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
       </div>
     );
   }
@@ -462,117 +180,608 @@ export default function CriterionPage() {
 
   if (!criterion) {
     return (
-      <div className="max-w-3xl mx-auto">
-        <Link href="/criteria" className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white mb-6">
-          <ArrowLeft size={16} />
-          Back to Criteria
+      <div className="max-w-5xl mx-auto">
+        <Link
+          href="/criteria"
+          className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white mb-6"
+        >
+          <ArrowLeft size={14} />
+          Back to criteria
         </Link>
-        <EmptyState title="Criterion not found" description={`No criterion with ID ${criterionId} was found.`} />
+        <EmptyState
+          title="Criterion not found"
+          description={`No criterion with ID ${criterionId} was found.`}
+        />
       </div>
     );
   }
 
-  const criterionLabel = CRITERION_LABELS[criterion.id] || criterion.title;
-  const criterionEvidence = evidence ? evidence.filter((e) => e.criterionId === criterionId) : [];
-  const completedEvidence = criterionEvidence.filter((e) => e.status === "final" || e.status === "reviewed").length;
+  const criterionEvidence = (evidence || []).filter(
+    (e) => e.criterionId === criterionId
+  );
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Back link */}
-      <Link href="/criteria" className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
-        <ArrowLeft size={16} />
-        Back to Criteria
+    <div className="max-w-5xl mx-auto">
+      <Link
+        href="/criteria"
+        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+      >
+        <ArrowLeft size={12} />
+        Back to criteria
       </Link>
 
-      {/* Header */}
-      <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-white">
-                <span className="text-zinc-500 mr-2">{criterion.id}.</span>
-                {criterionLabel}
-              </h1>
-              {criterion.targeted && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 uppercase tracking-wide">
-                  Targeted
-                </span>
+      <Header criterion={criterion} evidenceCount={criterionEvidence.length} />
+
+      <EvidenceSection
+        items={criterionEvidence}
+        loading={!evidence}
+      />
+
+      {criterionId === 4 && <ReviewersSection />}
+    </div>
+  );
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
+function Header({
+  criterion: c,
+  evidenceCount,
+}: {
+  criterion: CriterionEntry;
+  evidenceCount: number;
+}) {
+  const dotTone =
+    c.strengthScore >= 4
+      ? "bg-emerald-400"
+      : c.strengthScore >= 2
+      ? "bg-amber-400"
+      : c.strengthScore > 0
+      ? "bg-rose-400"
+      : "bg-zinc-700";
+  return (
+    <div className="border-b border-zinc-800 pb-6 mb-6">
+      <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+        Criterion {c.id}
+        {c.targeted && (
+          <>
+            <span className="text-zinc-700 mx-2">·</span>
+            <span className="text-indigo-300">Targeted</span>
+          </>
+        )}
+      </p>
+      <h1 className="text-3xl font-semibold text-white tracking-tight">
+        {CRITERION_LABELS[c.id] || c.title}
+      </h1>
+      <p className="text-sm text-zinc-400 mt-2 max-w-3xl">
+        {c.shortDescription}
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        <span
+          className={cn(
+            "text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded ring-1",
+            STATUS_TONE[c.status]
+          )}
+        >
+          {STATUS_LABEL[c.status]}
+        </span>
+        <span
+          className="flex items-center gap-1"
+          aria-label={`Strength ${c.strengthScore} of 5`}
+        >
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "w-2 h-2 rounded-full",
+                i < c.strengthScore ? dotTone : "bg-zinc-700"
               )}
-            </div>
-            <p className="text-zinc-400 text-sm mt-2">{criterion.shortDescription}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <StatusBadge status={criterion.status} />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">Strength</span>
-            <StrengthDots score={criterion.strengthScore} />
-          </div>
-        </div>
-
-        {criterion.notes && (
-          <div className="border-t border-zinc-700/50 pt-4">
-            <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Notes</h3>
-            <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{criterion.notes}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Evidence Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Evidence</h2>
-          <span className="text-sm text-zinc-400">
-            {completedEvidence}/{criterionEvidence.length} complete
+            />
+          ))}
+          <span className="ml-1.5 text-xs tabular-nums text-zinc-500">
+            {c.strengthScore}/5
           </span>
-        </div>
-
-        {criterionEvidence.length > 0 && (
-          <ProgressBar
-            value={completedEvidence}
-            max={criterionEvidence.length}
-            color="bg-indigo-500"
-          />
-        )}
-
-        {evidenceLoading ? (
-          <div className="flex items-center justify-center h-24">
-            <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
-          </div>
-        ) : criterionEvidence.length === 0 ? (
-          <EmptyState title="No evidence yet" description="No evidence items have been linked to this criterion." />
-        ) : (
-          <div className="space-y-3">
-            {criterionEvidence.map((e) => (
-              <div
-                key={e.id}
-                className={cn("border rounded-lg p-4 space-y-2", evidenceStatusColor(e.status))}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-white font-medium text-sm">{e.title}</h3>
-                  <StatusBadge status={e.status} />
-                </div>
-                {e.description && (
-                  <p className="text-xs text-zinc-400 leading-relaxed">{e.description}</p>
-                )}
-                <div className="flex flex-wrap gap-3 text-xs text-zinc-500">
-                  {e.dueDate && <span>Due: {formatDate(e.dueDate)}</span>}
-                  {e.completedAt && <span>Completed: {formatDate(e.completedAt)}</span>}
-                  {e.fileNote && <span className="text-zinc-400">{e.fileNote}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        </span>
+        <span className="text-xs tabular-nums text-zinc-500">
+          {evidenceCount} evidence
+        </span>
       </div>
 
-      {/* Criterion 4: Reviewer Tracker */}
-      {criterionId === 4 && (
-        <div className="border-t border-zinc-700/50 pt-6">
-          <ReviewerTracker />
+      {c.notes && (
+        <div className="mt-5 pt-4 border-t border-zinc-800/70">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500 mb-2">
+            Notes
+          </p>
+          <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+            {c.notes}
+          </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Evidence ─────────────────────────────────────────────────────────────────
+
+function EvidenceSection({
+  items,
+  loading,
+}: {
+  items: EvidenceItem[];
+  loading: boolean;
+}) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const grouped = useMemo(() => {
+    const out: Record<EvidenceStatus, EvidenceItem[]> = {
+      final: [],
+      reviewed: [],
+      received: [],
+      requested: [],
+      needed: [],
+    };
+    for (const e of items) out[e.status].push(e);
+    for (const k of Object.keys(out) as EvidenceStatus[]) {
+      out[k].sort((a, b) => {
+        const da = daysFromNow(a.dueDate);
+        const db = daysFromNow(b.dueDate);
+        if (da !== null && db !== null) return da - db;
+        if (da !== null) return -1;
+        if (db !== null) return 1;
+        return a.title.localeCompare(b.title);
+      });
+    }
+    return out;
+  }, [items]);
+
+  const finalCount = items.filter((e) => e.status === "final").length;
+  const overdue = items.filter((e) => {
+    const d = daysFromNow(e.dueDate);
+    return d !== null && d < 0 && e.status !== "final";
+  }).length;
+
+  function toggle(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <section className="mt-6">
+      <SectionHeader
+        label="Evidence"
+        meta={
+          <span className="flex items-baseline gap-3 tabular-nums">
+            <span className="text-zinc-500">
+              <span className="text-zinc-300">{items.length}</span> items
+            </span>
+            <span className="text-zinc-500">
+              <span className="text-emerald-300">{finalCount}</span> final
+            </span>
+            {overdue > 0 && (
+              <span className="text-zinc-500">
+                <span className="text-rose-300">{overdue}</span> overdue
+              </span>
+            )}
+          </span>
+        }
+      />
+      {loading ? (
+        <div className="flex items-center justify-center h-24">
+          <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="py-6">
+          <EmptyState
+            title="No evidence yet"
+            description="Linked evidence items will appear here."
+          />
+        </div>
+      ) : (
+        <div>
+          {EVIDENCE_GROUPS.map((g) => {
+            const rows = grouped[g.key];
+            if (rows.length === 0) return null;
+            return (
+              <SubSection key={g.key} label={g.label} count={rows.length}>
+                <ul className="divide-y divide-zinc-800/70">
+                  {rows.map((e) => (
+                    <EvidenceRow
+                      key={e.id}
+                      item={e}
+                      isExpanded={expanded.has(e.id)}
+                      onToggle={() => toggle(e.id)}
+                    />
+                  ))}
+                </ul>
+              </SubSection>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function EvidenceRow({
+  item: e,
+  isExpanded,
+  onToggle,
+}: {
+  item: EvidenceItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const days = daysFromNow(e.dueDate);
+  const isOverdue = days !== null && days < 0 && e.status !== "final";
+  const dueText = (() => {
+    if (!e.dueDate) return "";
+    if (isOverdue) return `Overdue ${fmtDate(e.dueDate)}`;
+    if (days !== null && days <= 14) return `${fmtDate(e.dueDate)} · ${days}d`;
+    return fmtDate(e.dueDate);
+  })();
+  const dueCls = isOverdue
+    ? "text-rose-400"
+    : days !== null && days <= 14
+    ? "text-amber-300"
+    : "text-zinc-500";
+  const hasDetails = !!e.description || !!e.fileNote || !!e.completedAt;
+
+  return (
+    <li
+      className={cn(
+        "relative",
+        isOverdue &&
+          "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-rose-500/70"
+      )}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={!hasDetails}
+        className={cn(
+          "group w-full text-left flex items-center gap-3 py-2 pl-3 pr-2 text-sm transition-colors",
+          hasDetails && "hover:bg-zinc-900/60 cursor-pointer",
+          !hasDetails && "cursor-default",
+          isOverdue && "pl-4"
+        )}
+      >
+        <span className="flex-1 min-w-0 truncate text-zinc-100">
+          {e.title}
+        </span>
+        <span
+          className={cn(
+            "hidden md:inline text-xs tabular-nums w-32 text-right truncate",
+            dueCls
+          )}
+        >
+          {dueText}
+        </span>
+        <span
+          className={cn(
+            "shrink-0 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded ring-1 w-24 text-center",
+            EVIDENCE_TONE[e.status]
+          )}
+        >
+          {EVIDENCE_LABEL[e.status]}
+        </span>
+        <span
+          className={cn(
+            "w-3 text-zinc-700 text-xs",
+            hasDetails && "group-hover:text-zinc-500"
+          )}
+          aria-hidden="true"
+        >
+          {hasDetails ? (isExpanded ? "−" : "+") : ""}
+        </span>
+      </button>
+      {isExpanded && hasDetails && (
+        <div className="pl-3 pr-12 pb-3 -mt-1 text-xs text-zinc-400 space-y-1.5">
+          {e.description && <p className="leading-relaxed">{e.description}</p>}
+          {(e.fileNote || e.completedAt) && (
+            <p className="flex flex-wrap gap-x-4 gap-y-1 text-zinc-500">
+              {e.completedAt && <span>Completed {fmtDate(e.completedAt)}</span>}
+              {e.fileNote && <span>{e.fileNote}</span>}
+            </p>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+// ─── Reviewers (criterion 4) ──────────────────────────────────────────────────
+
+function ReviewersSection() {
+  const { data, loading } = useData<ReviewersData>("reviewers");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const grouped = useMemo(() => {
+    const out: Record<ReviewerGroupKey, ReviewerApplication[]> = {
+      active: [],
+      in_flight: [],
+      todo: [],
+      watch: [],
+      closed: [],
+    };
+    if (!data) return out;
+    for (const r of data) {
+      const g = REVIEWER_GROUPS.find((g) => g.statuses.includes(r.status));
+      if (g) out[g.key].push(r);
+    }
+    for (const k of Object.keys(out) as ReviewerGroupKey[]) {
+      out[k].sort((a, b) => {
+        const ra = RELEVANCE_RANK[a.relevance] - RELEVANCE_RANK[b.relevance];
+        if (ra !== 0) return ra;
+        const da = daysFromNow(a.followUpDate);
+        const db = daysFromNow(b.followUpDate);
+        if (da !== null && db !== null) return da - db;
+        if (da !== null) return -1;
+        if (db !== null) return 1;
+        return a.venueName.localeCompare(b.venueName);
+      });
+    }
+    return out;
+  }, [data]);
+
+  const totals = useMemo(() => {
+    if (!data) return { venues: 0, letters: 0, deadlinesSoon: 0, overdue: 0 };
+    let letters = 0, deadlinesSoon = 0, overdue = 0;
+    for (const r of data) {
+      if (r.letterObtained) letters++;
+      const d = daysFromNow(r.followUpDate);
+      if (d !== null) {
+        if (d < 0 && r.status !== "closed" && r.status !== "rejected") overdue++;
+        else if (d <= 14 && d >= 0) deadlinesSoon++;
+      }
+    }
+    return { venues: data.length, letters, deadlinesSoon, overdue };
+  }, [data]);
+
+  function toggle(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <section className="mt-10">
+      <SectionHeader
+        label="Reviewer applications"
+        meta={
+          <span className="flex items-baseline gap-3 tabular-nums">
+            <span className="text-zinc-500">
+              <span className="text-zinc-300">{totals.venues}</span> venues
+            </span>
+            <span className="text-zinc-500">
+              <span className="text-emerald-300">{totals.letters}</span> letters
+            </span>
+            {totals.deadlinesSoon > 0 && (
+              <span className="text-zinc-500">
+                <span className="text-amber-300">{totals.deadlinesSoon}</span> due ≤14d
+              </span>
+            )}
+            {totals.overdue > 0 && (
+              <span className="text-zinc-500">
+                <span className="text-rose-300">{totals.overdue}</span> overdue
+              </span>
+            )}
+          </span>
+        }
+      />
+      {loading || !data ? (
+        <div className="flex items-center justify-center h-24">
+          <Loader2 className="w-5 h-5 animate-spin text-zinc-600" />
+        </div>
+      ) : data.length === 0 ? (
+        <div className="py-6">
+          <EmptyState
+            title="No reviewer applications yet"
+            description="Add entries to reviewers.json in your data repo."
+          />
+        </div>
+      ) : (
+        <div>
+          {REVIEWER_GROUPS.map((g) => {
+            const rows = grouped[g.key];
+            if (rows.length === 0) return null;
+            return (
+              <SubSection key={g.key} label={g.label} count={rows.length}>
+                <ul className="divide-y divide-zinc-800/70">
+                  {rows.map((r) => (
+                    <ReviewerRow
+                      key={r.id}
+                      reviewer={r}
+                      isExpanded={expanded.has(r.id)}
+                      onToggle={() => toggle(r.id)}
+                    />
+                  ))}
+                </ul>
+              </SubSection>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ReviewerRow({
+  reviewer: r,
+  isExpanded,
+  onToggle,
+}: {
+  reviewer: ReviewerApplication;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const primaryUrl = r.openReviewUrl || r.websiteUrl;
+  const days = daysFromNow(r.followUpDate);
+  const isOverdue =
+    days !== null && days < 0 &&
+    r.status !== "closed" && r.status !== "rejected";
+  const dateText = (() => {
+    if (r.followUpDate) {
+      if (isOverdue) return `Overdue ${fmtDate(r.followUpDate)}`;
+      if (days !== null) {
+        if (days === 0) return "Today";
+        if (days <= 14) return `${fmtDate(r.followUpDate)} · ${days}d`;
+      }
+      return `Follow up ${fmtDate(r.followUpDate)}`;
+    }
+    if (r.eventDates) return fmtDate(r.eventDates);
+    return "";
+  })();
+  const dateCls = isOverdue
+    ? "text-rose-400"
+    : r.followUpDate && days !== null && days <= 14
+    ? "text-amber-300"
+    : "text-zinc-500";
+  const hasDetails =
+    !!r.eb1aValue || !!r.notes || !!r.contactInfo ||
+    !!r.formalTitle || !!r.location;
+
+  return (
+    <li
+      className={cn(
+        "relative",
+        isOverdue &&
+          "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-rose-500/70"
+      )}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={!hasDetails}
+        className={cn(
+          "group w-full text-left flex items-center gap-3 py-2 pl-3 pr-2 text-sm transition-colors",
+          hasDetails && "hover:bg-zinc-900/60 cursor-pointer",
+          !hasDetails && "cursor-default",
+          isOverdue && "pl-4"
+        )}
+      >
+        <span className="flex-1 min-w-0 flex items-baseline gap-2">
+          <span className="text-zinc-100 truncate">{r.venueName}</span>
+          <span className="text-[11px] uppercase tracking-wider text-zinc-600 shrink-0">
+            {venueTypeLabel(r.venueType)}
+          </span>
+          {r.letterObtained && (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded text-emerald-300 bg-emerald-400/10 ring-1 ring-emerald-400/20 shrink-0">
+              Letter
+            </span>
+          )}
+        </span>
+        <span
+          className={cn(
+            "hidden sm:inline text-xs tabular-nums w-20 text-right",
+            RELEVANCE_TONE[r.relevance]
+          )}
+        >
+          {RELEVANCE_LABEL[r.relevance]}
+        </span>
+        <span
+          className={cn(
+            "hidden md:inline text-xs tabular-nums w-36 text-right truncate",
+            dateCls
+          )}
+        >
+          {dateText}
+        </span>
+        <span
+          className={cn(
+            "shrink-0 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded ring-1 w-24 text-center",
+            REVIEWER_STATUS_TONE[r.status]
+          )}
+        >
+          {REVIEWER_STATUS_LABEL[r.status]}
+        </span>
+        {primaryUrl ? (
+          <a
+            href={primaryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(ev) => ev.stopPropagation()}
+            className="shrink-0 p-1 rounded text-zinc-500 hover:text-indigo-300 hover:bg-zinc-800"
+            aria-label="Open external link"
+          >
+            <ExternalLink size={13} />
+          </a>
+        ) : (
+          <span className="w-[26px]" />
+        )}
+        <span
+          className={cn(
+            "w-3 text-zinc-700 text-xs",
+            hasDetails && "group-hover:text-zinc-500"
+          )}
+          aria-hidden="true"
+        >
+          {hasDetails ? (isExpanded ? "−" : "+") : ""}
+        </span>
+      </button>
+      {isExpanded && hasDetails && (
+        <div className="pl-3 pr-12 pb-3 -mt-1 text-xs text-zinc-400 space-y-1.5">
+          {r.eb1aValue && <p className="text-zinc-300 leading-relaxed">{r.eb1aValue}</p>}
+          {(r.location || r.contactInfo || r.formalTitle) && (
+            <p className="flex flex-wrap gap-x-4 gap-y-1 text-zinc-500">
+              {r.location && <span>{r.location}</span>}
+              {r.contactInfo && <span className="truncate">{r.contactInfo}</span>}
+              {r.formalTitle && <span className="text-indigo-300">{r.formalTitle}</span>}
+            </p>
+          )}
+          {r.notes && (
+            <p className="italic text-zinc-500 leading-relaxed">{r.notes}</p>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+// ─── Section primitives ───────────────────────────────────────────────────────
+
+function SectionHeader({
+  label,
+  meta,
+}: {
+  label: string;
+  meta?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between border-b border-zinc-800/70 py-2 mb-2">
+      <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-400">
+        {label}
+      </h2>
+      {meta && <div className="text-[11px] text-zinc-500">{meta}</div>}
+    </div>
+  );
+}
+
+function SubSection({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-6 last:mb-0">
+      <div className="flex items-baseline justify-between border-b border-zinc-800/40 py-1.5 mb-1">
+        <h3 className="text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-600">
+          {label}
+        </h3>
+        <span className="text-[10px] tabular-nums text-zinc-700">{count}</span>
+      </div>
+      {children}
     </div>
   );
 }

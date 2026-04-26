@@ -14,7 +14,7 @@ const TABS = [
   { href: "/", label: "Home", icon: LayoutDashboard, match: (p: string) => p === "/" },
   { href: "/criteria", label: "Criteria", icon: Target, match: (p: string) => p.startsWith("/criteria") || p === "/evidence" },
   { href: "/checklist", label: "Progress", icon: ListChecks, match: (p: string) => ["/checklist", "/timeline", "/letters"].includes(p) },
-  { href: "/more", label: "More", icon: MoreHorizontal, match: (p: string) => ["/more", "/budget", "/resources", "/settings", "/reviewers"].includes(p) },
+  { href: "/more", label: "More", icon: MoreHorizontal, match: (p: string) => ["/more", "/budget", "/resources", "/settings"].includes(p) },
 ];
 
 export default function BottomTabBar() {

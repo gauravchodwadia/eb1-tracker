@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { DollarSign, BookOpen, GraduationCap, Settings, ChevronRight } from "lucide-react";
+import { DollarSign, BookOpen, Settings, ChevronRight } from "lucide-react";
 
 const links = [
-  { href: "/reviewers", label: "Reviewers", icon: GraduationCap },
   { href: "/budget", label: "Budget", icon: DollarSign },
   { href: "/resources", label: "Resources", icon: BookOpen },
   { href: "/settings", label: "Settings", icon: Settings },
